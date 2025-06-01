@@ -60,24 +60,25 @@ pub fn spawn_level(
         .id();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let mut tiles = vec![];
-        let level = &level.levels[*current_level.get() as usize];
+        let grid = &level.levels[*current_level.get() as usize];
         const TILE_SIZE: f32 = 35.;
         const PADDING: f32 = 5.;
-        let grid_size = level.len().isqrt();
-        let half_size = TILE_SIZE * grid_size as f32 / 2. - TILE_SIZE / 2.;
-        let mut coords = Vec2::splat(-half_size);
-        for (i, tile) in level.iter().enumerate() {
+        let grid_size = grid.len().isqrt();
+        let tile_size = TILE_SIZE * (16 / grid_size) as f32;
+        let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
+        let mut coords = Vec2::splat(-offset);
+        for (i, tile) in grid.iter().enumerate() {
             if i > 0 && i % grid_size == 0 {
-                coords.y += TILE_SIZE;
-                coords.x = -half_size;
+                coords.y += tile_size;
+                coords.x = -offset;
             } else if i > 0 {
-                coords.x += TILE_SIZE;
+                coords.x += tile_size;
             }
             let tile = Tile::from_u8(*tile);
             tiles.push((
                 ChildOf(parent),
                 tile.clone(),
-                Sprite::from_color(tile.color(), Vec2::splat(TILE_SIZE - PADDING)),
+                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING)),
                 Transform::from_translation(coords.extend(0.0)),
             ));
         }
