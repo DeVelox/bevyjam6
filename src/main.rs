@@ -12,7 +12,10 @@ mod menus;
 mod screens;
 mod theme;
 
+use crate::demo::level::Levels;
 use bevy::{asset::AssetMetaCheck, prelude::*};
+use bevy_common_assets::ron::RonAssetPlugin;
+use bevy::render::camera::ScalingMode;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -23,7 +26,7 @@ pub struct AppPlugin;
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         // Add Bevy plugins.
-        app.add_plugins(
+        app.add_plugins((
             DefaultPlugins
                 .set(AssetPlugin {
                     // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -41,7 +44,8 @@ impl Plugin for AppPlugin {
                     .into(),
                     ..default()
                 }),
-        );
+            RonAssetPlugin::<Levels>::new(&[".ron"]),
+        ));
 
         // Add other plugins.
         app.add_plugins((
@@ -98,5 +102,16 @@ struct Pause(pub bool);
 struct PausableSystems;
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d));
+    commands.spawn((
+        Name::new("Camera"),
+        Camera2d,
+        Projection::Orthographic(OrthographicProjection {
+            scaling_mode: ScalingMode::AutoMax {
+                max_height: 720.0,
+                max_width: 1280.0,
+            },
+            scale: 1.0,
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
 }
