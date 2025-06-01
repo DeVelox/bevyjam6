@@ -6,10 +6,12 @@
 use bevy::prelude::*;
 
 pub mod level;
+pub mod logic;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         level::plugin,
+        logic::plugin,
         // animation::plugin,
     ));
 }
