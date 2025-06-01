@@ -1,10 +1,9 @@
 //! Spawn the main level.
 
-use bevy::color::palettes::css::*;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
 
-use crate::{asset_tracking::LoadResource, audio::music, screens::Screen};
+use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();
@@ -61,7 +60,7 @@ pub fn spawn_level(
     let mut tiles = vec![];
     if let Some(level) = levels.remove(level_assets.puzzles.id()) {
         let level = &level.levels[*current_level.get() as usize];
-        const TILE_SIZE: f32 = 30.;
+        const TILE_SIZE: f32 = 35.;
         const PADDING: f32 = 5.;
         let grid_size = level.len().isqrt();
         let half_size = TILE_SIZE * grid_size as f32 / 2. - TILE_SIZE / 2.;
@@ -131,7 +130,7 @@ impl Tile {
             Tile::Purple => Color::from(PURPLE),
             Tile::Brown => Color::from(BROWN),
             Tile::Pink => Color::from(PINK),
-            Tile::Empty => Color::from(GRAY),
+            Tile::Empty => Color::from(EMPTY),
         }
     }
 }
