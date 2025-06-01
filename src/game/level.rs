@@ -3,15 +3,8 @@
 use bevy::color::palettes::css::*;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
-use bevy_common_assets::ron::RonAssetPlugin;
 
-use crate::demo::player;
-use crate::{
-    asset_tracking::LoadResource,
-    audio::music,
-    demo::player::{PlayerAssets, player},
-    screens::Screen,
-};
+use crate::{asset_tracking::LoadResource, audio::music, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();

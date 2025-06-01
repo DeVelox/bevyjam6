@@ -5,17 +5,17 @@
 
 mod asset_tracking;
 mod audio;
-mod demo;
 #[cfg(feature = "dev")]
 mod dev_tools;
+mod game;
 mod menus;
 mod screens;
 mod theme;
 
-use crate::demo::level::Levels;
+use crate::game::level::Levels;
+use bevy::render::camera::ScalingMode;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_common_assets::ron::RonAssetPlugin;
-use bevy::render::camera::ScalingMode;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -51,7 +51,7 @@ impl Plugin for AppPlugin {
         app.add_plugins((
             asset_tracking::plugin,
             audio::plugin,
-            demo::plugin,
+            game::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
             menus::plugin,
