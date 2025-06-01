@@ -32,17 +32,48 @@ impl FromWorld for LevelAssets {
         }
     }
 }
+
 type Grid = Vec<u8>;
 #[derive(serde::Deserialize, Asset, TypePath)]
 pub struct Levels {
     levels: Vec<Grid>,
+}
+trait Render {
+    fn render(self: &Self, parent: Entity) -> Vec<(ChildOf, Tile, Sprite, Transform)>;
+}
+impl Render for Grid {
+    fn render(self: &Self, parent: Entity) -> Vec<(ChildOf, Tile, Sprite, Transform)> {
+        const TILE_SIZE: f32 = 35.;
+        const PADDING: f32 = 5.;
+        let grid_size = self.len().isqrt();
+        let tile_size = TILE_SIZE * (16 / grid_size) as f32;
+        let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
+        let mut coords = Vec2::splat(-offset);
+        let mut tiles = vec![];
+        for (i, tile) in self.iter().enumerate() {
+            if i > 0 && i % grid_size == 0 {
+                coords.y += tile_size;
+                coords.x = -offset;
+            } else if i > 0 {
+                coords.x += tile_size;
+            }
+            let tile = Tile::from_u8(*tile);
+            tiles.push((
+                ChildOf(parent),
+                tile.clone(),
+                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING)),
+                Transform::from_translation(coords.extend(0.0)),
+            ));
+        }
+        tiles
+    }
 }
 
 /// A system that spawns the main level.
 pub fn spawn_level(
     mut commands: Commands,
     level_assets: Res<LevelAssets>,
-    mut levels: ResMut<Assets<Levels>>,
+    levels: Res<Assets<Levels>>,
     current_level: Res<State<Level>>,
     mut state: ResMut<NextState<Level>>,
 ) {
@@ -59,33 +90,10 @@ pub fn spawn_level(
         ))
         .id();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
-        let mut tiles = vec![];
         let grid = &level.levels[*current_level.get() as usize];
-        const TILE_SIZE: f32 = 35.;
-        const PADDING: f32 = 5.;
-        let grid_size = grid.len().isqrt();
-        let tile_size = TILE_SIZE * (16 / grid_size) as f32;
-        let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
-        let mut coords = Vec2::splat(-offset);
-        for (i, tile) in grid.iter().enumerate() {
-            if i > 0 && i % grid_size == 0 {
-                coords.y += tile_size;
-                coords.x = -offset;
-            } else if i > 0 {
-                coords.x += tile_size;
-            }
-            let tile = Tile::from_u8(*tile);
-            tiles.push((
-                ChildOf(parent),
-                tile.clone(),
-                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING)),
-                Transform::from_translation(coords.extend(0.0)),
-            ));
-        }
-        commands.spawn_batch(tiles);
+        commands.spawn_batch(grid.render(parent));
         state.set(current_level.get().next());
     }
-    info!("hello");
 }
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
