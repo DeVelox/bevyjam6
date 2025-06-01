@@ -44,6 +44,7 @@ pub fn spawn_level(
     level_assets: Res<LevelAssets>,
     mut levels: ResMut<Assets<Levels>>,
     current_level: Res<State<Level>>,
+    mut state: ResMut<NextState<Level>>,
 ) {
     let parent = commands
         .spawn((
@@ -57,8 +58,8 @@ pub fn spawn_level(
             )],
         ))
         .id();
-    let mut tiles = vec![];
-    if let Some(level) = levels.remove(level_assets.puzzles.id()) {
+    if let Some(level) = levels.get(level_assets.puzzles.id()) {
+        let mut tiles = vec![];
         let level = &level.levels[*current_level.get() as usize];
         const TILE_SIZE: f32 = 35.;
         const PADDING: f32 = 5.;
@@ -80,9 +81,10 @@ pub fn spawn_level(
                 Transform::from_translation(coords.extend(0.0)),
             ));
         }
-        info!("{}", tiles.len());
         commands.spawn_batch(tiles);
+        state.set(current_level.get().next());
     }
+    info!("hello");
 }
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
@@ -90,6 +92,33 @@ pub fn spawn_level(
 pub enum Level {
     #[default]
     Intro,
+    Beginner,
+    Intermediate,
+    Expert,
+}
+
+trait Switch {
+    fn next(&self) -> Self;
+    fn prev(&self) -> Self;
+}
+
+impl Switch for Level {
+    fn next(&self) -> Self {
+        match self {
+            Level::Intro => Level::Beginner,
+            Level::Beginner => Level::Intermediate,
+            Level::Intermediate => Level::Expert,
+            Level::Expert => Level::Intro,
+        }
+    }
+    fn prev(&self) -> Self {
+        match self {
+            Level::Expert => Level::Intermediate,
+            Level::Intermediate => Level::Beginner,
+            Level::Beginner => Level::Intro,
+            Level::Intro => Level::Expert,
+        }
+    }
 }
 
 #[derive(Component, Default, Copy, Clone)]
