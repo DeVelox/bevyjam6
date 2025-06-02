@@ -14,6 +14,7 @@ mod theme;
 
 use crate::game::level::Levels;
 use bevy::render::camera::ScalingMode;
+use bevy::window::WindowResized;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_common_assets::ron::RonAssetPlugin;
 
@@ -76,6 +77,7 @@ impl Plugin for AppPlugin {
 
         // Spawn the main camera.
         app.add_systems(Startup, spawn_camera);
+        app.add_systems(Update, update_ui_scale);
     }
 }
 
@@ -102,6 +104,7 @@ struct Pause(pub bool);
 struct PausableSystems;
 
 fn spawn_camera(mut commands: Commands) {
+    commands.init_resource::<UiScale>();
     commands.spawn((
         Name::new("Camera"),
         Camera2d,
@@ -114,4 +117,18 @@ fn spawn_camera(mut commands: Commands) {
             ..OrthographicProjection::default_2d()
         }),
     ));
+}
+
+fn update_ui_scale(
+    mut ui_scale: ResMut<UiScale>,
+    mut window_resized: EventReader<WindowResized>,
+    windows: Query<&Window>,
+) {
+    for event in window_resized.read() {
+        if let Ok(window) = windows.get(event.window) {
+            let base_height = 1080.0;
+            let scale_factor = window.height() / base_height;
+            ui_scale.0 = scale_factor;
+        }
+    }
 }
