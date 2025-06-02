@@ -39,10 +39,10 @@ pub struct Levels {
     levels: Vec<Grid>,
 }
 trait Render {
-    fn render(self: &Self, parent: Entity) -> Vec<(ChildOf, Tile, Sprite, Transform)>;
+    fn render(&self, parent: Entity) -> Vec<(Tile, ChildOf, Sprite, Transform)>;
 }
 impl Render for Grid {
-    fn render(self: &Self, parent: Entity) -> Vec<(ChildOf, Tile, Sprite, Transform)> {
+    fn render(&self, parent: Entity) -> Vec<(Tile, ChildOf, Sprite, Transform)> {
         const TILE_SIZE: f32 = 128.;
         const PADDING: f32 = 8.;
         let grid_size = self.len().isqrt();
@@ -59,8 +59,8 @@ impl Render for Grid {
             }
             let tile = Tile::from_u8(*tile);
             tiles.push((
+                tile,
                 ChildOf(parent),
-                tile.clone(),
                 Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING)),
                 Transform::from_translation(coords.extend(0.0)),
             ));
@@ -159,17 +159,17 @@ impl Tile {
             _ => Tile::Empty,
         }
     }
-    fn color(self: &Self) -> Color {
+    fn color(&self) -> Color {
         match self {
-            Tile::Red => Color::from(RED),
-            Tile::Green => Color::from(GREEN),
-            Tile::Blue => Color::from(BLUE),
-            Tile::Yellow => Color::from(YELLOW),
-            Tile::Orange => Color::from(ORANGE),
-            Tile::Purple => Color::from(PURPLE),
-            Tile::Brown => Color::from(BROWN),
-            Tile::Pink => Color::from(PINK),
-            Tile::Empty => Color::from(EMPTY),
+            Tile::Red => RED,
+            Tile::Green => GREEN,
+            Tile::Blue => BLUE,
+            Tile::Yellow => YELLOW,
+            Tile::Orange => ORANGE,
+            Tile::Purple => PURPLE,
+            Tile::Brown => BROWN,
+            Tile::Pink => PINK,
+            Tile::Empty => EMPTY,
         }
     }
 }
