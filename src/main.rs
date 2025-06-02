@@ -107,8 +107,8 @@ fn spawn_camera(mut commands: Commands) {
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
             scaling_mode: ScalingMode::AutoMax {
-                max_height: 720.0,
-                max_width: 1280.0,
+                max_height: 2160.0,
+                max_width: 3840.0,
             },
             scale: 1.0,
             ..OrthographicProjection::default_2d()

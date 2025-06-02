@@ -28,6 +28,7 @@ fn spawn_credits_menu(mut commands: Commands) {
             created_by(),
             widget::header("Assets"),
             assets(),
+            widget::header(" "), // just a gap
             widget::button("Back", go_back_on_click),
         ],
     ));
@@ -35,8 +36,9 @@ fn spawn_credits_menu(mut commands: Commands) {
 
 fn created_by() -> impl Bundle {
     grid(vec![
-        ["Joe Shmoe", "Implemented alligator wrestling AI"],
-        ["Jane Doe", "Made the music for the alien invasion"],
+        ["DeVelox", "Wrote all the code"],
+        ["MrRgon", "Made all the puzzles"],
+        ["EjayFreeKay", "Drew all the art"],
     ])
 }
 

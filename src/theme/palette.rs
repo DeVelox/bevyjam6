@@ -1,19 +1,12 @@
 use bevy::prelude::*;
+pub const LABEL_TEXT: Color = Color::srgb(0.965, 0.910, 0.878);
+pub const HEADER_TEXT: Color = Color::srgb(0.953, 0.659, 0.200);
+pub const BACKGROUND_COLOR: Color = Color::srgb(0.243, 0.231, 0.396);
 
-/// #ddd369
-pub const LABEL_TEXT: Color = Color::srgb(0.867, 0.827, 0.412);
-
-/// #fcfbcc
-pub const HEADER_TEXT: Color = Color::srgb(0.988, 0.984, 0.800);
-
-/// #ececec
-pub const BUTTON_TEXT: Color = Color::srgb(0.925, 0.925, 0.925);
-/// #4666bf
-pub const BUTTON_BACKGROUND: Color = Color::srgb(0.275, 0.400, 0.750);
-/// #6299d1
-pub const BUTTON_HOVERED_BACKGROUND: Color = Color::srgb(0.384, 0.600, 0.820);
-/// #3d4999
-pub const BUTTON_PRESSED_BACKGROUND: Color = Color::srgb(0.239, 0.286, 0.600);
+pub const BUTTON_TEXT: Color = Color::srgb(0.953, 0.659, 0.200);
+pub const BUTTON_BACKGROUND: Color = Color::srgb(0.420, 0.149, 0.263);
+pub const BUTTON_HOVERED_BACKGROUND: Color = Color::srgb(0.675, 0.157, 0.278);
+pub const BUTTON_PRESSED_BACKGROUND: Color = Color::srgb(0.173, 0.118, 0.192);
 
 pub const RED: Color = Color::srgb(0.675, 0.157, 0.278);
 pub const GREEN: Color = Color::srgb(0.149, 0.522, 0.298);

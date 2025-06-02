@@ -41,6 +41,7 @@ fn settings_grid() -> impl Bundle {
             row_gap: Px(10.0),
             column_gap: Px(30.0),
             grid_template_columns: RepeatedGridTrack::px(2, 400.0),
+            align_items: AlignItems::Center,
             ..default()
         },
         children![
@@ -61,6 +62,7 @@ fn global_volume_widget() -> impl Bundle {
         Name::new("Global Volume Widget"),
         Node {
             justify_self: JustifySelf::Start,
+            align_items: AlignItems::Center,
             ..default()
         },
         children![

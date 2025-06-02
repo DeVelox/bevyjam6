@@ -43,8 +43,8 @@ trait Render {
 }
 impl Render for Grid {
     fn render(self: &Self, parent: Entity) -> Vec<(ChildOf, Tile, Sprite, Transform)> {
-        const TILE_SIZE: f32 = 35.;
-        const PADDING: f32 = 5.;
+        const TILE_SIZE: f32 = 128.;
+        const PADDING: f32 = 8.;
         let grid_size = self.len().isqrt();
         let tile_size = TILE_SIZE * (16 / grid_size) as f32;
         let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
@@ -92,6 +92,7 @@ pub fn spawn_level(
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let grid = &level.levels[*current_level.get() as usize];
         commands.spawn_batch(grid.render(parent));
+        // Only on win
         state.set(current_level.get().next());
     }
 }
