@@ -5,11 +5,16 @@ use bevy::{
     ui::UiDebugOptions,
 };
 
-use crate::screens::Screen;
+use crate::{
+    game::{level::Level, logic::IterationState},
+    screens::Screen,
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
+    app.add_systems(Update, log_transitions::<Level>);
+    app.add_systems(Update, log_transitions::<IterationState>);
 
     // Toggle the debug overlay for UI.
     app.add_systems(

@@ -1,9 +1,13 @@
 //! Spawn the main level.
 
-use bevy::prelude::*;
+use bevy::ecs::component::HookContext;
+use bevy::ecs::world::DeferredWorld;
 use bevy::reflect::TypePath;
+use bevy::{platform::collections::HashSet, prelude::*};
 
 use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
+
+use super::logic::{GridIterations, PlayerInput};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();
@@ -32,19 +36,21 @@ impl FromWorld for LevelAssets {
         }
     }
 }
-
+#[derive(Component)]
+pub struct Board;
 pub type Grid = Vec<u8>;
 #[derive(serde::Deserialize, Asset, TypePath)]
 pub struct Levels {
     levels: Vec<Grid>,
 }
-trait Render {
-    fn render(&self, parent: Entity) -> Vec<(Tile, ChildOf, Sprite, Transform)>;
+pub trait Utility {
+    fn render(&self, parent: Entity) -> Vec<(Tile, Board, ChildOf, Transform)>;
+    fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile>;
 }
-impl Render for Grid {
-    fn render(&self, parent: Entity) -> Vec<(Tile, ChildOf, Sprite, Transform)> {
-        const TILE_SIZE: f32 = 128.;
-        const PADDING: f32 = 8.;
+const TILE_SIZE: f32 = 128.;
+const PADDING: f32 = 8.;
+impl Utility for Grid {
+    fn render(&self, parent: Entity) -> Vec<(Tile, Board, ChildOf, Transform)> {
         let grid_size = self.len().isqrt();
         let tile_size = TILE_SIZE * (16 / grid_size) as f32;
         let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
@@ -60,12 +66,39 @@ impl Render for Grid {
             let tile = Tile::from_u8(*tile);
             tiles.push((
                 tile,
+                Board,
                 ChildOf(parent),
-                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING)),
                 Transform::from_translation(coords.extend(0.0)),
             ));
         }
         tiles
+    }
+
+    fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile> {
+        let gs = self.len().isqrt() as i32;
+        let offsets = [-(gs + 1), -gs, -(gs - 1), -1, 1, gs - 1, gs, gs + 1];
+        if let Some(rule) = &input.rules.get(&Tile::from_u8(self[index])) {
+            let neighbours: HashSet<Tile> = offsets
+                .iter()
+                .enumerate()
+                .filter(|&(i, _)| rule.mask[i])
+                .map(|(_, &offset)| {
+                    let neighbour = index as i32 + offset;
+                    if neighbour >= 0 && neighbour < self.len() as i32 {
+                        Tile::from_u8(self[neighbour as usize])
+                    } else {
+                        Tile::Empty
+                    }
+                })
+                .collect();
+            if rule.tiles.iter().all(|tile| neighbours.contains(tile)) {
+                Some(rule.result)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 
@@ -75,7 +108,7 @@ pub fn spawn_level(
     level_assets: Res<LevelAssets>,
     levels: Res<Assets<Levels>>,
     current_level: Res<State<Level>>,
-    mut state: ResMut<NextState<Level>>,
+    mut grid_iter: ResMut<GridIterations>,
 ) {
     let parent = commands
         .spawn((
@@ -91,9 +124,9 @@ pub fn spawn_level(
         .id();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let grid = &level.levels[*current_level.get() as usize];
+        grid_iter.grid.clear();
+        grid_iter.grid.push((*grid).to_vec());
         commands.spawn_batch(grid.render(parent));
-        // Only on win
-        state.set(current_level.get().next());
     }
 }
 
@@ -131,7 +164,8 @@ impl Switch for Level {
     }
 }
 
-#[derive(Component, Default, Copy, Clone)]
+#[derive(Component, Default, Copy, Clone, Eq, Hash, PartialEq)]
+#[component(on_insert = insert_sprite)]
 pub enum Tile {
     Red,
     Green,
@@ -144,9 +178,30 @@ pub enum Tile {
     #[default]
     Empty,
 }
-
+fn insert_sprite(mut world: DeferredWorld, context: HookContext) {
+    let tile_color = world
+        .get::<Tile>(context.entity)
+        .unwrap_or(&Tile::Empty)
+        .color();
+    let grid_size = world
+        .get_resource::<GridIterations>()
+        .unwrap()
+        .grid
+        .last()
+        .unwrap()
+        .len()
+        .isqrt();
+    let tile_size = TILE_SIZE * (16 / grid_size) as f32;
+    world
+        .commands()
+        .entity(context.entity)
+        .insert(Sprite::from_color(
+            tile_color,
+            Vec2::splat(tile_size - PADDING),
+        ));
+}
 impl Tile {
-    fn from_u8(value: u8) -> Tile {
+    pub fn from_u8(value: u8) -> Tile {
         match value {
             0 => Tile::Red,
             1 => Tile::Green,
@@ -159,7 +214,7 @@ impl Tile {
             _ => Tile::Empty,
         }
     }
-    fn color(&self) -> Color {
+    pub fn color(&self) -> Color {
         match self {
             Tile::Red => RED,
             Tile::Green => GREEN,

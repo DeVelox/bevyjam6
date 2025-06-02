@@ -6,11 +6,14 @@ use crate::{
     theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT},
 };
 
-use super::logic::simulation_callback;
+use super::logic::{reset_simulation, run_simulation, step_simulation};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_ui);
 }
+
+// TODO: Toggle reset/step button visibility based on simulation state
+// TODO: Lock the rule editor based on simulation state
 
 fn spawn_ui(mut commands: Commands) {
     commands.spawn((
@@ -18,12 +21,7 @@ fn spawn_ui(mut commands: Commands) {
         GlobalZIndex(2),
         StateScoped(Screen::Gameplay),
         children![
-            widget::button_custom(
-                "Simulate",
-                simulation_callback,
-                Some(BUTTON_COLORS_ALT),
-                None
-            ),
+            widget::button_custom("Simulate", run_simulation, Some(BUTTON_COLORS_ALT), None),
             (
                 Node {
                     display: Display::Grid,
@@ -33,8 +31,8 @@ fn spawn_ui(mut commands: Commands) {
                     ..default()
                 },
                 children![
-                    widget::button_custom("Prev", simulation_callback, None, Some(BUTTON_SIZE_ALT)),
-                    widget::button_custom("Next", simulation_callback, None, Some(BUTTON_SIZE_ALT)),
+                    widget::button_custom("Reset", reset_simulation, None, Some(BUTTON_SIZE_ALT)),
+                    widget::button_custom("Step", step_simulation, None, Some(BUTTON_SIZE_ALT)),
                 ],
             ),
         ],
