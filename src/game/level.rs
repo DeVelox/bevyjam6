@@ -33,7 +33,7 @@ impl FromWorld for LevelAssets {
     }
 }
 
-type Grid = Vec<u8>;
+pub type Grid = Vec<u8>;
 #[derive(serde::Deserialize, Asset, TypePath)]
 pub struct Levels {
     levels: Vec<Grid>,

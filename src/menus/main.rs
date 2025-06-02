@@ -2,7 +2,12 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::Screen, theme::widget};
+use crate::{
+    asset_tracking::ResourceHandles,
+    menus::Menu,
+    screens::Screen,
+    theme::widget::{self, BUTTON_COLORS_ALT},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
@@ -15,14 +20,24 @@ fn spawn_main_menu(mut commands: Commands) {
         StateScoped(Menu::Main),
         #[cfg(not(target_family = "wasm"))]
         children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
+            widget::button_custom(
+                "Play",
+                enter_loading_or_gameplay_screen,
+                Some(BUTTON_COLORS_ALT),
+                None
+            ),
             widget::button("Settings", open_settings_menu),
             widget::button("Credits", open_credits_menu),
             widget::button("Exit", exit_app),
         ],
         #[cfg(target_family = "wasm")]
         children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
+            widget::button_custom(
+                "Play",
+                enter_loading_or_gameplay_screen,
+                Some(BUTTON_COLORS_ALT),
+                None
+            ),
             widget::button("Settings", open_settings_menu),
             widget::button("Credits", open_credits_menu),
         ],
