@@ -21,7 +21,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridIterations>();
     app.init_state::<IterationState>();
     app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
-    app.add_systems(OnEnter(IterationState::Rendering), rendering_step);
+    app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
     app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
         Update,
@@ -46,12 +46,14 @@ pub struct Rule {
 #[derive(Resource)]
 pub struct GridIterations {
     pub grid: Vec<Grid>,
+    pub goal: Grid,
     pub max: usize,
 }
 impl Default for GridIterations {
     fn default() -> Self {
         Self {
             grid: vec![],
+            goal: vec![],
             max: 5,
         }
     }
@@ -71,7 +73,8 @@ pub enum IterationState {
     #[default]
     Paused,
     Simulating,
-    Rendering,
+    Displaying,
+    Victory,
     Reset,
 }
 
@@ -110,12 +113,13 @@ fn simulation_step(
         }
     }
     grid.grid.push(new_grid);
-    state.set(IterationState::Rendering);
+    state.set(IterationState::Displaying);
 }
 fn rendering_step(
     mut commands: Commands,
     grid: Res<GridIterations>,
     board: Query<Entity, With<Board>>,
+    mut state: ResMut<NextState<IterationState>>,
 ) {
     let reset = if grid.grid.len() == 1 { true } else { false };
     for (i, entity) in board.iter().enumerate() {
@@ -125,8 +129,11 @@ fn rendering_step(
                 .insert(Tile::from_u8(grid.grid.last().unwrap()[i]));
         }
     }
+    if grid.grid.last().unwrap() == &grid.goal {
+        state.set(IterationState::Victory);
+    }
 }
 fn reset_step(mut grid: ResMut<GridIterations>, mut state: ResMut<NextState<IterationState>>) {
     grid.grid.truncate(1);
-    state.set(IterationState::Rendering);
+    state.set(IterationState::Displaying);
 }

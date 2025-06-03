@@ -139,6 +139,10 @@ pub fn spawn_level(
         grid_iter.grid.push((*grid).to_vec());
         commands.spawn_batch(grid.render(parent));
     }
+    if let Some(solution) = levels.get(level_assets.solutions.id()) {
+        let grid = &solution.levels[*current_level.get() as usize];
+        grid_iter.goal = (*grid).to_vec();
+    }
 }
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
