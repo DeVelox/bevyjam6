@@ -4,7 +4,7 @@ use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::
 
 use crate::{menus::Menu, screens::Screen};
 
-use super::level::{Board, Grid, Tile, Utility};
+use super::level::{Board, Grid, Level, Switch, Tile, Utility};
 
 pub(super) fn plugin(app: &mut App) {
     // app.init_resource::<PlayerInput>();
@@ -22,6 +22,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<IterationState>();
     app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
     app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
+    app.add_systems(OnEnter(IterationState::Victory), next_level);
     app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
         Update,
@@ -97,6 +98,14 @@ pub fn step_simulation(_: Trigger<Pointer<Click>>, mut state: ResMut<NextState<I
 }
 pub fn reset_simulation(_: Trigger<Pointer<Click>>, mut state: ResMut<NextState<IterationState>>) {
     state.set(IterationState::Reset);
+}
+pub fn next_level(
+    current_level: Res<State<Level>>,
+    mut level: ResMut<NextState<Level>>,
+    mut screen: ResMut<NextState<Screen>>,
+) {
+    level.set(current_level.get().next());
+    screen.set(Screen::Loading);
 }
 
 fn simulation_step(

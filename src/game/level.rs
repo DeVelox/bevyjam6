@@ -155,7 +155,7 @@ pub enum Level {
     Expert,
 }
 
-trait Switch {
+pub trait Switch {
     fn next(&self) -> Self;
     fn prev(&self) -> Self;
 }
