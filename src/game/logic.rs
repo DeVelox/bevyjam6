@@ -13,26 +13,32 @@ use super::{
 pub(super) fn plugin(app: &mut App) {
     // app.init_resource::<PlayerInput>();
     app.insert_resource(PlayerInput {
-        rules: HashMap::from([(
-            Tile::Red,
-            Rule {
-                tiles: vec![Tile::Red],
-                mask: [false, false, true, false, true, false, false, true],
-                result: Tile::Green,
-            },
-        ),(
-            Tile::Green,
-             Rule {
-                 tiles: vec![Tile::Green],
-                 mask: [false, false, true, false, true, false, false, true],
-                 result: Tile::Red,
-             },
-        )]),
+        rules: HashMap::from([
+            (
+                Tile::Red,
+                Rule {
+                    tiles: vec![Tile::Red],
+                    mask: [false, false, true, false, true, false, false, true],
+                    result: Tile::Green,
+                },
+            ),
+            (
+                Tile::Green,
+                Rule {
+                    tiles: vec![Tile::Green],
+                    mask: [false, false, true, false, true, false, false, true],
+                    result: Tile::Red,
+                },
+            ),
+        ]),
     });
     app.init_resource::<GridIterations>();
     app.init_state::<IterationState>();
     app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
-    app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
+    app.add_systems(
+        OnEnter(IterationState::Displaying),
+        (rendering_step, check_faces, check_wincon),
+    );
     app.add_systems(OnEnter(IterationState::Victory), show_next_level);
     app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
@@ -148,8 +154,6 @@ fn rendering_step(
     level_assets: Res<LevelAssets>,
     grid: Res<GridIterations>,
     board: Query<Entity, With<Puzzle>>,
-    faces: Query<Entity, With<Face>>,
-    mut state: ResMut<NextState<IterationState>>,
 ) {
     let reset = if grid.grid.len() == 1 { true } else { false };
     let image = level_assets.tilesheet.clone();
@@ -161,7 +165,7 @@ fn rendering_step(
                 .insert(Tile::from_u8(grid.grid.last().unwrap()[i]));
             commands.spawn((
                 ChildOf(entity),
-                AnimationConfig::new(12, 16, 10),
+                AnimationConfig::new(12, 16, 20),
                 Sprite {
                     image: image.clone(),
                     custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
@@ -174,21 +178,36 @@ fn rendering_step(
             ));
         }
     }
+}
+fn check_faces(
+    mut commands: Commands,
+    grid: Res<GridIterations>,
+    faces: Query<Entity, With<Face>>,
+) {
     for (i, entity) in faces.iter().enumerate() {
-        commands.entity(entity).insert(if reset {
-            Face::Thinking
-        } else if grid.is_correct(i) {
+        commands.entity(entity).insert(if grid.is_correct(i) {
             Face::Happy
         } else {
             Face::Sad
         });
     }
-    if grid.grid.last().unwrap() == &grid.goal {
+}
+fn check_wincon(
+    mut commands: Commands,
+    grid: Res<GridIterations>,
+    mut state: ResMut<NextState<IterationState>>,
+) {
+    if grid.grid.last().unwrap_or(&Vec::new()) == &grid.goal {
         commands.remove_resource::<AutomaticSimulation>();
         state.set(IterationState::Victory);
     }
 }
-fn reset_step(mut grid: ResMut<GridIterations>, mut state: ResMut<NextState<IterationState>>) {
+fn reset_step(
+    mut commands: Commands,
+    mut grid: ResMut<GridIterations>,
+    mut state: ResMut<NextState<IterationState>>,
+) {
     grid.grid.truncate(1);
+    commands.remove_resource::<AutomaticSimulation>();
     state.set(IterationState::Displaying);
 }

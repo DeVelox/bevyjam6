@@ -9,7 +9,7 @@ use bevy::reflect::TypePath;
 
 use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
 
-use super::logic::{GridIterations, PlayerInput};
+use super::logic::{GridIterations, IterationState, PlayerInput};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();
@@ -28,7 +28,6 @@ pub struct LevelAssets {
     pub solutions: Handle<Levels>,
     #[dependency]
     pub tilesheet: Handle<Image>,
-    // #[dependency]
     pub atlas: Handle<TextureAtlasLayout>,
     pub tile_size: f32,
 }
@@ -54,6 +53,45 @@ impl FromWorld for LevelAssets {
         }
     }
 }
+/// A system that spawns the main level.
+pub fn spawn_level(
+    mut commands: Commands,
+    mut level_assets: ResMut<LevelAssets>,
+    levels: Res<Assets<Levels>>,
+    current_level: Res<State<Level>>,
+    mut grid_iter: ResMut<GridIterations>,
+    mut state: ResMut<NextState<IterationState>>,
+) {
+    let parent = commands
+        .spawn((
+            Name::new("Level"),
+            Transform::default(),
+            Visibility::default(),
+            StateScoped(Screen::Gameplay),
+            children![(
+                Name::new("Gameplay Music"),
+                music(level_assets.music.clone())
+            )],
+        ))
+        .id();
+    if let Some(level) = levels.get(level_assets.puzzles.id()) {
+        let grid = &level.levels[*current_level.get() as usize];
+        grid_iter.grid.clear();
+        grid_iter.grid.push((*grid).to_vec());
+        let (puzzle, tile_size) = grid.render_puzzle(parent);
+        level_assets.tile_size = tile_size;
+        for bundle in puzzle {
+            commands.spawn(bundle);
+        }
+    }
+    if let Some(solution) = levels.get(level_assets.solutions.id()) {
+        let grid = &solution.levels[*current_level.get() as usize];
+        grid_iter.goal = (*grid).to_vec();
+        commands.spawn_batch(grid.render_solution(parent));
+    }
+    state.set(IterationState::Reset);
+}
+
 #[derive(Component)]
 pub struct Puzzle;
 #[derive(Component)]
@@ -159,43 +197,6 @@ impl Utility for Grid {
         } else {
             None
         }
-    }
-}
-
-/// A system that spawns the main level.
-pub fn spawn_level(
-    mut commands: Commands,
-    mut level_assets: ResMut<LevelAssets>,
-    levels: Res<Assets<Levels>>,
-    current_level: Res<State<Level>>,
-    mut grid_iter: ResMut<GridIterations>,
-) {
-    let parent = commands
-        .spawn((
-            Name::new("Level"),
-            Transform::default(),
-            Visibility::default(),
-            StateScoped(Screen::Gameplay),
-            children![(
-                Name::new("Gameplay Music"),
-                music(level_assets.music.clone())
-            )],
-        ))
-        .id();
-    if let Some(level) = levels.get(level_assets.puzzles.id()) {
-        let grid = &level.levels[*current_level.get() as usize];
-        grid_iter.grid.clear();
-        grid_iter.grid.push((*grid).to_vec());
-        let (puzzle, tile_size) = grid.render_puzzle(parent);
-        level_assets.tile_size = tile_size;
-        for bundle in puzzle {
-            commands.spawn(bundle);
-        }
-    }
-    if let Some(solution) = levels.get(level_assets.solutions.id()) {
-        let grid = &solution.levels[*current_level.get() as usize];
-        grid_iter.goal = (*grid).to_vec();
-        commands.spawn_batch(grid.render_solution(parent));
     }
 }
 
