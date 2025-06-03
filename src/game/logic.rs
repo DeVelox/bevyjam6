@@ -141,9 +141,9 @@ fn simulation_step(
     debug!("{}", grid.grid.len());
     let current_grid = grid.grid.last().expect("Level not loaded.");
     let mut new_grid = current_grid.clone();
-    for i in 0..current_grid.len() {
+    for (i, new_tile) in new_grid.iter_mut().enumerate().take(current_grid.len()) {
         if let Some(tile) = current_grid.check_neighbours(i, &input) {
-            new_grid[i] = tile as u8;
+            *new_tile = tile as u8;
         }
     }
     grid.grid.push(new_grid);
@@ -155,7 +155,7 @@ fn rendering_step(
     grid: Res<GridIterations>,
     board: Query<Entity, With<Puzzle>>,
 ) {
-    let reset = if grid.grid.len() == 1 { true } else { false };
+    let reset = grid.grid.len() == 1;
     let image = level_assets.tilesheet.clone();
     let atlas = level_assets.atlas.clone();
     for (i, entity) in board.iter().enumerate() {
