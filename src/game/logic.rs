@@ -12,8 +12,8 @@ pub(super) fn plugin(app: &mut App) {
         rules: HashMap::from([(
             Tile::Red,
             Rule {
-                tiles: [Tile::Green, Tile::Blue],
-                mask: [true, true, true, true, true, true, true, true],
+                tiles: vec![Tile::Orange],
+                mask: [true, false, false, false, false, false, false, false],
                 result: Tile::Orange,
             },
         )]),
@@ -39,7 +39,7 @@ pub struct PlayerInput {
     pub rules: HashMap<Tile, Rule>,
 }
 pub struct Rule {
-    pub tiles: [Tile; 2],
+    pub tiles: Vec<Tile>,
     pub mask: [bool; 8],
     pub result: Tile,
 }

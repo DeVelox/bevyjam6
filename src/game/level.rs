@@ -75,17 +75,28 @@ impl Utility for Grid {
     }
 
     fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile> {
+        // probably inefficient
         let gs = self.len().isqrt() as i32;
-        let offsets = [-(gs + 1), -gs, -(gs - 1), -1, 1, gs - 1, gs, gs + 1];
+        let offsets = &[-(gs + 1), -gs, -(gs - 1), -1, 1, gs - 1, gs, gs + 1];
+        let left_offset = &[-(gs + 1), -1, gs - 1];
+        let right_offset = &[-(gs - 1), 1, gs + 1];
+        let left_edge = index % gs as usize == 0;
+        let right_edge = (index + 1) % gs as usize == 0;
         if let Some(rule) = &input.rules.get(&Tile::from_u8(self[index])) {
-            let neighbours: HashSet<Tile> = offsets
+            let neighbours: Vec<Tile> = offsets
                 .iter()
                 .enumerate()
                 .filter(|&(i, _)| rule.mask[i])
                 .map(|(_, &offset)| {
-                    let neighbour = index as i32 + offset;
-                    if neighbour >= 0 && neighbour < self.len() as i32 {
-                        Tile::from_u8(self[neighbour as usize])
+                    let neighbor = index as i32 + offset;
+                    if neighbor >= 0 && neighbor < self.len() as i32 {
+                        if (left_edge && left_offset.contains(&offset))
+                            || (right_edge && right_offset.contains(&offset))
+                        {
+                            Tile::Empty
+                        } else {
+                            Tile::from_u8(self[neighbor as usize])
+                        }
                     } else {
                         Tile::Empty
                     }
