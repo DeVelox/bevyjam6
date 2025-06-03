@@ -2,8 +2,8 @@
 
 use bevy::ecs::component::HookContext;
 use bevy::ecs::world::DeferredWorld;
+use bevy::prelude::*;
 use bevy::reflect::TypePath;
-use bevy::{platform::collections::HashSet, prelude::*};
 
 use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
 
@@ -51,6 +51,7 @@ pub trait Utility {
     fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile>;
 }
 const TILE_SIZE: f32 = 128.;
+const MINI_SCALE: f32 = 3.;
 const PADDING: f32 = 8.;
 impl Utility for Grid {
     fn render_puzzle(&self, parent: Entity) -> Vec<(Tile, Puzzle, ChildOf, Transform)> {
@@ -79,7 +80,7 @@ impl Utility for Grid {
 
     fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)> {
         let grid_size = self.len().isqrt();
-        let tile_size = TILE_SIZE / 4. * (16 / grid_size) as f32;
+        let tile_size = TILE_SIZE / MINI_SCALE * (16 / grid_size) as f32;
         let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
         let mut coords = Vec2::splat(-offset);
         let mut tiles = vec![];
@@ -95,9 +96,9 @@ impl Utility for Grid {
                 Solution,
                 ChildOf(parent),
                 Transform::from_translation(
-                    (TILE_SIZE * Vec2::new(11.5, 6.0) + coords).extend(0.0),
+                    (TILE_SIZE * Vec2::new(35., 16.) / MINI_SCALE + coords).extend(0.0),
                 ),
-                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING / 4.)),
+                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING / MINI_SCALE)),
             ));
         }
         tiles

@@ -126,8 +126,9 @@ fn update_ui_scale(
 ) {
     for event in window_resized.read() {
         if let Ok(window) = windows.get(event.window) {
+            let base_width = 1920.0;
             let base_height = 1080.0;
-            let scale_factor = window.height() / base_height;
+            let scale_factor = (window.width() / base_width).min(window.height() / base_height);
             ui_scale.0 = scale_factor;
         }
     }

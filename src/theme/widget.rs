@@ -249,14 +249,16 @@ pub fn ui_left(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (
         Name::new(name),
         Node {
-            position_type: PositionType::Absolute,
             width: Percent(23.0),
             height: Percent(100.0),
-            align_self: AlignSelf::FlexStart,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
             row_gap: Px(8.0),
+            margin: UiRect {
+                right: Val::Px(1450.),
+                ..default()
+            },
             ..default()
         },
         // Don't block picking events for other UI roots.
@@ -267,14 +269,16 @@ pub fn ui_right(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (
         Name::new(name),
         Node {
-            position_type: PositionType::Absolute,
             width: Percent(23.0),
             height: Percent(100.0),
-            align_self: AlignSelf::FlexEnd,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
             row_gap: Px(8.0),
+            margin: UiRect {
+                left: Val::Px(1450.),
+                ..default()
+            },
             ..default()
         },
         // Don't block picking events for other UI roots.
