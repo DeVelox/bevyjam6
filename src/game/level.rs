@@ -211,7 +211,7 @@ pub enum Level {
 
 pub trait Switch {
     fn next(&self) -> Self;
-    fn prev(&self) -> Self;
+    // fn prev(&self) -> Self;
 }
 
 impl Switch for Level {
@@ -223,14 +223,14 @@ impl Switch for Level {
             Level::Expert => Level::Intro,
         }
     }
-    fn prev(&self) -> Self {
-        match self {
-            Level::Expert => Level::Intermediate,
-            Level::Intermediate => Level::Beginner,
-            Level::Beginner => Level::Intro,
-            Level::Intro => Level::Expert,
-        }
-    }
+    // fn prev(&self) -> Self {
+    //     match self {
+    //         Level::Expert => Level::Intermediate,
+    //         Level::Intermediate => Level::Beginner,
+    //         Level::Beginner => Level::Intro,
+    //         Level::Intro => Level::Expert,
+    //     }
+    // }
 }
 
 #[derive(Component, Default, Copy, Clone, Eq, Hash, PartialEq)]
