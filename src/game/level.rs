@@ -1,5 +1,7 @@
 //! Spawn the main level.
 
+use std::any::TypeId;
+
 use bevy::ecs::component::HookContext;
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
@@ -19,20 +21,36 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Resource)]
 pub struct LevelAssets {
     #[dependency]
-    music: Handle<AudioSource>,
+    pub music: Handle<AudioSource>,
     #[dependency]
-    puzzles: Handle<Levels>,
+    pub puzzles: Handle<Levels>,
     #[dependency]
-    solutions: Handle<Levels>,
+    pub solutions: Handle<Levels>,
+    #[dependency]
+    pub tilesheet: Handle<Image>,
+    // #[dependency]
+    pub atlas: Handle<TextureAtlasLayout>,
+    pub tile_size: f32,
 }
 
 impl FromWorld for LevelAssets {
     fn from_world(world: &mut World) -> Self {
+        let mut layouts = world.resource_mut::<Assets<TextureAtlasLayout>>();
+        let atlas = layouts.add(TextureAtlasLayout::from_grid(
+            UVec2::splat(512),
+            9,
+            2,
+            None,
+            None,
+        ));
         let assets = world.resource::<AssetServer>();
         Self {
+            atlas,
             music: assets.load("audio/music/Fluffing A Duck.ogg"),
             puzzles: assets.load("levels/puzzles.ron"),
             solutions: assets.load("levels/solutions.ron"),
+            tilesheet: assets.load("images/tilesheet.png"),
+            tile_size: 128.,
         }
     }
 }
@@ -46,7 +64,7 @@ pub struct Levels {
     levels: Vec<Grid>,
 }
 pub trait Utility {
-    fn render_puzzle(&self, parent: Entity) -> Vec<(Tile, Puzzle, ChildOf, Transform)>;
+    fn render_puzzle(&self, parent: Entity) -> (Vec<impl Bundle>, f32);
     fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)>;
     fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile>;
 }
@@ -54,7 +72,7 @@ const TILE_SIZE: f32 = 128.;
 const MINI_SCALE: f32 = 3.;
 const PADDING: f32 = 8.;
 impl Utility for Grid {
-    fn render_puzzle(&self, parent: Entity) -> Vec<(Tile, Puzzle, ChildOf, Transform)> {
+    fn render_puzzle(&self, parent: Entity) -> (Vec<impl Bundle>, f32) {
         let grid_size = self.len().isqrt();
         let tile_size = TILE_SIZE * (16 / grid_size) as f32;
         let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
@@ -73,9 +91,10 @@ impl Utility for Grid {
                 Puzzle,
                 ChildOf(parent),
                 Transform::from_translation(coords.extend(0.0)),
+                children![Face::Thinking],
             ));
         }
-        tiles
+        (tiles, tile_size)
     }
 
     fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)> {
@@ -146,7 +165,7 @@ impl Utility for Grid {
 /// A system that spawns the main level.
 pub fn spawn_level(
     mut commands: Commands,
-    level_assets: Res<LevelAssets>,
+    mut level_assets: ResMut<LevelAssets>,
     levels: Res<Assets<Levels>>,
     current_level: Res<State<Level>>,
     mut grid_iter: ResMut<GridIterations>,
@@ -167,7 +186,11 @@ pub fn spawn_level(
         let grid = &level.levels[*current_level.get() as usize];
         grid_iter.grid.clear();
         grid_iter.grid.push((*grid).to_vec());
-        commands.spawn_batch(grid.render_puzzle(parent));
+        let (puzzle, tile_size) = grid.render_puzzle(parent);
+        level_assets.tile_size = tile_size;
+        for bundle in puzzle {
+            commands.spawn(bundle);
+        }
     }
     if let Some(solution) = levels.get(level_assets.solutions.id()) {
         let grid = &solution.levels[*current_level.get() as usize];
@@ -211,7 +234,7 @@ impl Switch for Level {
 }
 
 #[derive(Component, Default, Copy, Clone, Eq, Hash, PartialEq)]
-#[component(on_insert = insert_sprite)]
+#[component(on_insert = insert_sprite::<Tile>)]
 pub enum Tile {
     Red,
     Green,
@@ -224,27 +247,35 @@ pub enum Tile {
     #[default]
     Empty,
 }
-fn insert_sprite(mut world: DeferredWorld, context: HookContext) {
-    let tile_color = world
-        .get::<Tile>(context.entity)
-        .unwrap_or(&Tile::Empty)
-        .color();
-    let grid_size = world
-        .get_resource::<GridIterations>()
-        .unwrap()
-        .grid
-        .last()
-        .unwrap()
-        .len()
-        .isqrt();
-    let tile_size = TILE_SIZE * (16 / grid_size) as f32;
-    world
-        .commands()
-        .entity(context.entity)
-        .insert(Sprite::from_color(
-            tile_color,
-            Vec2::splat(tile_size - PADDING),
-        ));
+#[derive(Component, Default, Copy, Clone, Eq, Hash, PartialEq)]
+#[component(on_insert = insert_sprite::<Face>)]
+pub enum Face {
+    Happy,
+    Sad,
+    #[default]
+    Thinking,
+}
+fn insert_sprite<T: Component>(mut world: DeferredWorld, context: HookContext) {
+    let level_assets = world.resource::<LevelAssets>();
+    let image = level_assets.tilesheet.clone();
+    let atlas = level_assets.atlas.clone();
+    let tile_size = level_assets.tile_size;
+    let tile = if TypeId::of::<T>() == TypeId::of::<Tile>() {
+        *world.get::<Tile>(context.entity).unwrap_or(&Tile::Empty) as usize
+    } else if TypeId::of::<T>() == TypeId::of::<Face>() {
+        9 + *world.get::<Face>(context.entity).unwrap_or(&Face::Thinking) as usize
+    } else {
+        17 // last tile
+    };
+    world.commands().entity(context.entity).insert(Sprite {
+        image,
+        custom_size: Some(Vec2::splat(tile_size - PADDING)),
+        texture_atlas: Some(TextureAtlas {
+            layout: atlas,
+            index: tile,
+        }),
+        ..default()
+    });
 }
 impl Tile {
     pub fn from_u8(value: u8) -> Tile {

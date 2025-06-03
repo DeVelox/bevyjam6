@@ -4,7 +4,10 @@ use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::
 
 use crate::{menus::Menu, screens::Screen};
 
-use super::level::{Grid, Level, Puzzle, Switch, Tile, Utility};
+use super::{
+    animation::AnimationConfig,
+    level::{Face, Grid, Level, LevelAssets, Puzzle, Switch, Tile, Utility},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // app.init_resource::<PlayerInput>();
@@ -60,6 +63,9 @@ impl Default for GridIterations {
     }
 }
 impl GridIterations {
+    pub fn is_correct(&self, index: usize) -> bool {
+        self.grid.last().unwrap()[index] == self.goal[index]
+    }
     pub fn changed(&self, index: usize) -> bool {
         let current = self.grid.last().unwrap();
         let previous = self.grid.get(self.grid.len().saturating_sub(2)).unwrap();
@@ -126,19 +132,46 @@ fn simulation_step(
 }
 fn rendering_step(
     mut commands: Commands,
+    level_assets: Res<LevelAssets>,
     grid: Res<GridIterations>,
     board: Query<Entity, With<Puzzle>>,
+    faces: Query<Entity, With<Face>>,
     mut state: ResMut<NextState<IterationState>>,
 ) {
     let reset = if grid.grid.len() == 1 { true } else { false };
+    let image = level_assets.tilesheet.clone();
+    let atlas = level_assets.atlas.clone();
     for (i, entity) in board.iter().enumerate() {
         if grid.changed(i) || reset {
             commands
                 .entity(entity)
                 .insert(Tile::from_u8(grid.grid.last().unwrap()[i]));
+            commands.spawn((
+                ChildOf(entity),
+                AnimationConfig::new(12, 16, 10),
+                Sprite {
+                    image: image.clone(),
+                    custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
+                    texture_atlas: Some(TextureAtlas {
+                        layout: atlas.clone(),
+                        index: 12,
+                    }),
+                    ..default()
+                },
+            ));
         }
     }
+    for (i, entity) in faces.iter().enumerate() {
+        commands.entity(entity).insert(if reset {
+            Face::Thinking
+        } else if grid.is_correct(i) {
+            Face::Happy
+        } else {
+            Face::Sad
+        });
+    }
     if grid.grid.last().unwrap() == &grid.goal {
+        commands.remove_resource::<AutomaticSimulation>();
         state.set(IterationState::Victory);
     }
 }
