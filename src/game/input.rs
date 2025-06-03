@@ -2,14 +2,22 @@ use Val::Px;
 use bevy::prelude::*;
 
 use crate::{
+    menus::Menu,
     screens::Screen,
     theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT},
 };
 
-use super::logic::{reset_simulation, run_simulation, step_simulation};
+use super::{
+    level::{Level, Switch},
+    logic::{AutomaticSimulation, reset_simulation, step_simulation, toggle_simulation},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_ui);
+    app.add_systems(
+        Update,
+        update_button_text.run_if(in_state(Screen::Gameplay).and(in_state(Menu::None))),
+    );
 }
 
 // TODO: Toggle reset/step button visibility based on simulation state
@@ -23,7 +31,7 @@ fn spawn_ui(mut commands: Commands) {
         children![(
             widget::ui_left("Simulation Controls"),
             children![
-                widget::button_custom("Simulate", run_simulation, Some(BUTTON_COLORS_ALT), None),
+                widget::button_custom("Simulate", toggle_simulation, Some(BUTTON_COLORS_ALT), None),
                 (
                     Node {
                         display: Display::Grid,
@@ -42,7 +50,44 @@ fn spawn_ui(mut commands: Commands) {
                         widget::button_custom("Step", step_simulation, None, Some(BUTTON_SIZE_ALT)),
                     ],
                 ),
+                (
+                    Visibility::Hidden,
+                    NextLevel,
+                    widget::button("Next Level", go_next_level)
+                ),
             ],
         )],
     ));
+}
+#[derive(Component)]
+pub struct NextLevel;
+pub fn show_next_level(mut commands: Commands, button: Single<Entity, With<NextLevel>>) {
+    commands
+        .entity(button.into_inner())
+        .insert(Visibility::Visible);
+}
+pub fn go_next_level(
+    _: Trigger<Pointer<Click>>,
+    current_level: Res<State<Level>>,
+    mut level: ResMut<NextState<Level>>,
+    mut screen: ResMut<NextState<Screen>>,
+) {
+    level.set(current_level.get().next());
+    screen.set(Screen::Loading);
+}
+
+pub fn update_button_text(auto: Option<Res<AutomaticSimulation>>, mut text: Query<&mut Text>) {
+    if auto.is_some() {
+        for mut text in &mut text {
+            if text.0 == "Simulate" {
+                text.0 = "Pause".to_string();
+            }
+        }
+    } else {
+        for mut text in &mut text {
+            if text.0 == "Pause" {
+                text.0 = "Simulate".to_string();
+            }
+        }
+    }
 }

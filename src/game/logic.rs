@@ -6,7 +6,8 @@ use crate::{menus::Menu, screens::Screen};
 
 use super::{
     animation::AnimationConfig,
-    level::{Face, Grid, Level, LevelAssets, Puzzle, Switch, Tile, Utility},
+    input::show_next_level,
+    level::{Face, Grid, LevelAssets, Puzzle, Tile, Utility},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -25,7 +26,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<IterationState>();
     app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
     app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
-    app.add_systems(OnEnter(IterationState::Victory), next_level);
+    app.add_systems(OnEnter(IterationState::Victory), show_next_level);
     app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
         Update,
@@ -58,7 +59,7 @@ impl Default for GridIterations {
         Self {
             grid: vec![],
             goal: vec![],
-            max: 5,
+            max: 50,
         }
     }
 }
@@ -96,22 +97,27 @@ fn simulation_system(
     }
     state.set(IterationState::Simulating);
 }
-pub fn run_simulation(_: Trigger<Pointer<Click>>, mut commands: Commands) {
-    commands.init_resource::<AutomaticSimulation>()
+pub fn toggle_simulation(
+    _: Trigger<Pointer<Click>>,
+    auto: Option<Res<AutomaticSimulation>>,
+    mut commands: Commands,
+) {
+    if auto.is_some() {
+        commands.remove_resource::<AutomaticSimulation>();
+    } else {
+        commands.init_resource::<AutomaticSimulation>();
+    }
 }
-pub fn step_simulation(_: Trigger<Pointer<Click>>, mut state: ResMut<NextState<IterationState>>) {
+pub fn step_simulation(
+    _: Trigger<Pointer<Click>>,
+    mut state: ResMut<NextState<IterationState>>,
+    mut commands: Commands,
+) {
+    commands.remove_resource::<AutomaticSimulation>();
     state.set(IterationState::Simulating);
 }
 pub fn reset_simulation(_: Trigger<Pointer<Click>>, mut state: ResMut<NextState<IterationState>>) {
     state.set(IterationState::Reset);
-}
-pub fn next_level(
-    current_level: Res<State<Level>>,
-    mut level: ResMut<NextState<Level>>,
-    mut screen: ResMut<NextState<Screen>>,
-) {
-    level.set(current_level.get().next());
-    screen.set(Screen::Loading);
 }
 
 fn simulation_step(
