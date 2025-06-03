@@ -37,20 +37,23 @@ impl FromWorld for LevelAssets {
     }
 }
 #[derive(Component)]
-pub struct Board;
+pub struct Puzzle;
+#[derive(Component)]
+pub struct Solution;
 pub type Grid = Vec<u8>;
 #[derive(serde::Deserialize, Asset, TypePath)]
 pub struct Levels {
     levels: Vec<Grid>,
 }
 pub trait Utility {
-    fn render(&self, parent: Entity) -> Vec<(Tile, Board, ChildOf, Transform)>;
+    fn render_puzzle(&self, parent: Entity) -> Vec<(Tile, Puzzle, ChildOf, Transform)>;
+    fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)>;
     fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile>;
 }
 const TILE_SIZE: f32 = 128.;
 const PADDING: f32 = 8.;
 impl Utility for Grid {
-    fn render(&self, parent: Entity) -> Vec<(Tile, Board, ChildOf, Transform)> {
+    fn render_puzzle(&self, parent: Entity) -> Vec<(Tile, Puzzle, ChildOf, Transform)> {
         let grid_size = self.len().isqrt();
         let tile_size = TILE_SIZE * (16 / grid_size) as f32;
         let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
@@ -66,9 +69,35 @@ impl Utility for Grid {
             let tile = Tile::from_u8(*tile);
             tiles.push((
                 tile,
-                Board,
+                Puzzle,
                 ChildOf(parent),
                 Transform::from_translation(coords.extend(0.0)),
+            ));
+        }
+        tiles
+    }
+
+    fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)> {
+        let grid_size = self.len().isqrt();
+        let tile_size = TILE_SIZE / 4. * (16 / grid_size) as f32;
+        let offset = tile_size * grid_size as f32 / 2. - tile_size / 2.;
+        let mut coords = Vec2::splat(-offset);
+        let mut tiles = vec![];
+        for (i, tile) in self.iter().enumerate() {
+            if i > 0 && i % grid_size == 0 {
+                coords.y += tile_size;
+                coords.x = -offset;
+            } else if i > 0 {
+                coords.x += tile_size;
+            }
+            let tile = Tile::from_u8(*tile);
+            tiles.push((
+                Solution,
+                ChildOf(parent),
+                Transform::from_translation(
+                    (TILE_SIZE * Vec2::new(11.5, 6.0) + coords).extend(0.0),
+                ),
+                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING / 4.)),
             ));
         }
         tiles
@@ -137,11 +166,12 @@ pub fn spawn_level(
         let grid = &level.levels[*current_level.get() as usize];
         grid_iter.grid.clear();
         grid_iter.grid.push((*grid).to_vec());
-        commands.spawn_batch(grid.render(parent));
+        commands.spawn_batch(grid.render_puzzle(parent));
     }
     if let Some(solution) = levels.get(level_assets.solutions.id()) {
         let grid = &solution.levels[*current_level.get() as usize];
         grid_iter.goal = (*grid).to_vec();
+        commands.spawn_batch(grid.render_solution(parent));
     }
 }
 

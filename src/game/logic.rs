@@ -4,7 +4,7 @@ use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::
 
 use crate::{menus::Menu, screens::Screen};
 
-use super::level::{Board, Grid, Level, Switch, Tile, Utility};
+use super::level::{Grid, Level, Puzzle, Switch, Tile, Utility};
 
 pub(super) fn plugin(app: &mut App) {
     // app.init_resource::<PlayerInput>();
@@ -127,7 +127,7 @@ fn simulation_step(
 fn rendering_step(
     mut commands: Commands,
     grid: Res<GridIterations>,
-    board: Query<Entity, With<Board>>,
+    board: Query<Entity, With<Puzzle>>,
     mut state: ResMut<NextState<IterationState>>,
 ) {
     let reset = if grid.grid.len() == 1 { true } else { false };
