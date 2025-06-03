@@ -16,10 +16,17 @@ pub(super) fn plugin(app: &mut App) {
         rules: HashMap::from([(
             Tile::Red,
             Rule {
-                tiles: vec![Tile::Orange],
-                mask: [true, false, false, false, false, false, false, false],
-                result: Tile::Orange,
+                tiles: vec![Tile::Red],
+                mask: [false, false, true, false, true, false, false, true],
+                result: Tile::Green,
             },
+        ),(
+            Tile::Green,
+             Rule {
+                 tiles: vec![Tile::Green],
+                 mask: [false, false, true, false, true, false, false, true],
+                 result: Tile::Red,
+             },
         )]),
     });
     app.init_resource::<GridIterations>();
