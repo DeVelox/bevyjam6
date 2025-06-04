@@ -8,15 +8,20 @@ edition = "2024"
 bevy = { version = "0.16", features = ["wayland"] }
 rand = "0.8"
 serde = "1.0"
+bevy_egui = "0.34"
 bevy_common_assets = { version = "0.13", features = ["ron"] }
 # Compile low-severity logs out of native builds for performance.
-log = { version = "0.4", features = ["max_level_debug",
+log = { version = "0.4", features = [
+    "max_level_debug",
     "release_max_level_warn",
 ] }
 # Compile low-severity logs out of web builds for performance.
-tracing = { version = "0.1", features = ["max_level_debug",
+tracing = { version = "0.1", features = [
+    "max_level_debug",
     "release_max_level_warn",
 ] }
+[patch.crates-io]
+bevy_egui = { git = "https://github.com/vladbat00/bevy_egui.git" }
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.
@@ -33,14 +38,15 @@ tracing = { version = "0.1", features = ["max_level_debug",
 [features]
 # Default to a native dev build.
 default = ["dev_native"]
-dev = [# Improve compile times for dev builds by linking Bevy as a dynamic library.
+dev = [ # Improve compile times for dev builds by linking Bevy as a dynamic library.
     "bevy/dynamic_linking",
     "bevy/bevy_dev_tools",
     "bevy/bevy_ui_debug",
     # Improve error messages coming from Bevy
     "bevy/track_location",
 ]
-dev_native = ["dev",
+dev_native = [
+    "dev",
     # Enable asset hot reloading for native dev builds.
     "bevy/file_watcher",
     # Enable embedded asset hot reloading for native dev builds.

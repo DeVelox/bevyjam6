@@ -245,40 +245,45 @@ pub const BUTTON_SIZE_ALT: ButtonSize = ButtonSize {
     width: 146.0,
     height: 60.0,
 };
-pub fn ui_left(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+pub fn ui_split(name: impl Into<Cow<'static, str>>, align: AlignItems) -> impl Bundle {
+    const MARGIN: Val = Val::Px(550.0);
+    let mut margin = UiRect::default().with_bottom(Val::Px(150.0));
+    match align {
+        AlignItems::FlexStart => {
+            margin.left = MARGIN;
+        }
+        AlignItems::FlexEnd => {
+            margin.right = MARGIN;
+        }
+        _ => {}
+    };
     (
         Name::new(name),
         Node {
-            width: Percent(23.0),
-            height: Percent(100.0),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
+            width: Percent(50.0),
+            height: Px(1080.0),
+            align_items: align,
+            justify_content: JustifyContent::FlexEnd,
             flex_direction: FlexDirection::Column,
             row_gap: Px(8.0),
-            margin: UiRect {
-                right: Val::Px(1450.),
-                ..default()
-            },
+            margin,
             ..default()
         },
         // Don't block picking events for other UI roots.
         Pickable::IGNORE,
     )
 }
-pub fn ui_right(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (
         Name::new(name),
         Node {
-            width: Percent(23.0),
+            position_type: PositionType::Absolute,
+            width: Percent(100.0),
             height: Percent(100.0),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
+            flex_direction: FlexDirection::Row,
             row_gap: Px(8.0),
-            margin: UiRect {
-                left: Val::Px(1450.),
-                ..default()
-            },
             ..default()
         },
         // Don't block picking events for other UI roots.

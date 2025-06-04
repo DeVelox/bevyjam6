@@ -21,6 +21,8 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Resource)]
 pub struct LevelAssets {
     #[dependency]
+    pub font: Handle<Font>,
+    #[dependency]
     pub music: Handle<AudioSource>,
     #[dependency]
     pub puzzles: Handle<Levels>,
@@ -45,6 +47,7 @@ impl FromWorld for LevelAssets {
         let assets = world.resource::<AssetServer>();
         Self {
             atlas,
+            font: assets.load("fonts/SpaceMono-Regular.ttf"),
             music: assets.load("audio/music/Fluffing A Duck.ogg"),
             puzzles: assets.load("levels/puzzles.ron"),
             solutions: assets.load("levels/solutions.ron"),
@@ -106,7 +109,7 @@ pub trait Utility {
     fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)>;
     fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile>;
 }
-const TILE_SIZE: f32 = 128.;
+const TILE_SIZE: f32 = 120.;
 const MINI_SCALE: f32 = 3.;
 const PADDING: f32 = 8.;
 impl Utility for Grid {
@@ -153,7 +156,7 @@ impl Utility for Grid {
                 Solution,
                 ChildOf(parent),
                 Transform::from_translation(
-                    (TILE_SIZE * Vec2::new(35., 16.) / MINI_SCALE + coords).extend(0.0),
+                    (TILE_SIZE * Vec2::new(35., 15.) / MINI_SCALE + coords).extend(0.0),
                 ),
                 Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING / MINI_SCALE)),
             ));
