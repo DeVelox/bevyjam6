@@ -159,15 +159,15 @@ fn rendering_step(
     let image = level_assets.tilesheet.clone();
     let atlas = level_assets.atlas.clone();
     for (i, entity) in board.iter().enumerate() {
+        let tile = Tile::from_u8(grid.grid.last().unwrap()[i]);
         if grid.changed(i) || reset {
-            commands
-                .entity(entity)
-                .insert(Tile::from_u8(grid.grid.last().unwrap()[i]));
+            commands.entity(entity).insert(tile);
             commands.spawn((
                 ChildOf(entity),
                 AnimationConfig::new(12, 16, 20),
                 Sprite {
                     image: image.clone(),
+                    color: tile.color(),
                     custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
                     texture_atlas: Some(TextureAtlas {
                         layout: atlas.clone(),
