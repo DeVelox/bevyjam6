@@ -31,6 +31,7 @@ pub(super) fn plugin(app: &mut App) {
             update_button_text,
             handle_mask_buttons,
             handle_invert_buttons,
+            handle_color_pickers,
         )
             .run_if(in_state(Screen::Gameplay).and(in_state(Menu::None))),
     );
@@ -189,18 +190,53 @@ pub struct InvertToggleButton {
     pub tile: Tile,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ColorPickerButton {
     pub tile: Tile,
     pub index: usize,
     pub color: Option<Tile>,
 }
 
-fn handle_mask_buttons(
-    mut interaction_query: Query<(&Interaction, &MaskToggleButton), Changed<Interaction>>,
+impl ColorPickerButton {
+    pub fn change_color(&mut self, color_pool: &Vec<Option<Tile>>) -> Option<Tile> {
+        let mut new_color = color_pool[0];
+        for (index, &color) in color_pool.iter().enumerate() {
+            if color == self.color {
+                if index + 1 < color_pool.len() {
+                    new_color = color_pool[index + 1];
+                }
+                break;
+            }
+        }
+        self.color = new_color;
+        new_color
+    }
+}
+
+fn handle_color_pickers(
+    mut interaction_query: Query<(&Interaction, &mut ColorPickerButton), Changed<Interaction>>,
     mut rules: ResMut<PlayerRules>,
 ) {
-    for (interaction, button) in &mut interaction_query {
+    let color_pool = &rules.color_pool.clone();
+    for (interaction, mut button) in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Some(rule) = rules.rules.get_mut(&button.tile) {
+                match button.index {
+                    0 => rule.tiles[0] = button.change_color(color_pool),
+                    1 => rule.tiles[1] = button.change_color(color_pool),
+                    2 => rule.result = button.change_color(color_pool),
+                    _ => {}
+                };
+            }
+        }
+    }
+}
+
+fn handle_mask_buttons(
+    interaction_query: Query<(&Interaction, &MaskToggleButton), Changed<Interaction>>,
+    mut rules: ResMut<PlayerRules>,
+) {
+    for (interaction, button) in &interaction_query {
         if *interaction == Interaction::Pressed {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
                 rule.mask[button.index] = !rule.mask[button.index];
@@ -210,10 +246,10 @@ fn handle_mask_buttons(
 }
 
 fn handle_invert_buttons(
-    mut interaction_query: Query<(&Interaction, &InvertToggleButton), Changed<Interaction>>,
+    interaction_query: Query<(&Interaction, &InvertToggleButton), Changed<Interaction>>,
     mut rules: ResMut<PlayerRules>,
 ) {
-    for (interaction, button) in &mut interaction_query {
+    for (interaction, button) in &interaction_query {
         if *interaction == Interaction::Pressed {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
                 rule.invert = !rule.invert;

@@ -54,6 +54,7 @@ pub(super) fn plugin(app: &mut App) {
 #[derive(Resource, Default)]
 pub struct PlayerRules {
     pub rules: HashMap<Tile, Rule>,
+    pub color_pool: Vec<Option<Tile>>,
 }
 #[derive(Clone, Default)]
 pub struct Rule {

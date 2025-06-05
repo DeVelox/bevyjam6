@@ -77,10 +77,10 @@ pub fn spawn_level(
             )],
         ))
         .id();
-    let mut present_tiles: Grid = default();
+    let mut color_pool: Grid = default();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let grid = &level.levels[*current_level.get() as usize];
-        present_tiles.extend(grid);
+        color_pool.extend(grid);
         grid_iter.grid.clear();
         grid_iter.grid.push((*grid).to_vec());
         let (puzzle, tile_size) = grid.render_puzzle(parent);
@@ -91,26 +91,20 @@ pub fn spawn_level(
     }
     if let Some(solution) = levels.get(level_assets.solutions.id()) {
         let grid = &solution.levels[*current_level.get() as usize];
-        present_tiles.extend(grid);
+        color_pool.extend(grid);
         grid_iter.goal = (*grid).to_vec();
         commands.spawn_batch(grid.render_solution(parent));
     }
     let mut rules = PlayerRules::default();
     // Just an example rule preset, will init with Rule::default()
-    for tile in present_tiles {
-        let result = match tile {
-            0 => Tile::Green,
-            1 => Tile::Red,
-            _ => Tile::Empty,
-        };
-        rules.rules.entry(Tile::from_u8(tile)).or_insert(Rule {
-            tiles: [None, Some(Tile::from_u8(tile))],
-            mask: [false, false, true, false, true, false, false, true],
-            result: Some(result),
-            invert: false,
-            ..default()
-        });
+    for tile in color_pool {
+        let tile = Tile::from_u8(tile);
+        rules.rules.entry(tile).or_insert(Rule::default());
+        rules.color_pool.push(Some(tile));
     }
+    rules.color_pool.sort();
+    rules.color_pool.dedup();
+    rules.color_pool.push(None);
     commands.insert_resource(rules);
     state.set(IterationState::Reset);
 }
@@ -245,7 +239,7 @@ impl Switch for Level {
     }
 }
 
-#[derive(Component, Default, Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Component, Default, Debug, Copy, Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
 #[component(on_insert = insert_sprite::<Tile>)]
 pub enum Tile {
     Red,

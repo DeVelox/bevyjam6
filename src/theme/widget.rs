@@ -10,7 +10,7 @@ use bevy::{
 
 use crate::{
     game::{
-        interface::{InvertToggleButton, MaskToggleButton},
+        interface::{ColorPickerButton, InvertToggleButton, MaskToggleButton},
         level::Tile,
         logic::Rule,
     },
@@ -309,7 +309,12 @@ pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
 pub struct ColorPickerEvent {
     pub color: Color,
 }
-pub fn color_picker(tile: Option<Tile>, _image: Handle<Image>, is_key: bool) -> impl Bundle {
+pub fn color_picker(
+    tile: Option<Tile>,
+    _image: Handle<Image>,
+    is_key: bool,
+    action: ColorPickerButton,
+) -> impl Bundle {
     let mut offset = Vec2::ZERO;
     if let Some(tile) = tile {
         offset.x = tile as u8 as f32;
@@ -335,6 +340,7 @@ pub fn color_picker(tile: Option<Tile>, _image: Handle<Image>, is_key: bool) -> 
                 .spawn((
                     Name::new("Picker Inner"),
                     Button,
+                    action,
                     BackgroundColor(BUTTON_TEXT_ALT),
                     InteractionPalette {
                         none: BUTTON_TEXT_ALT,
@@ -458,7 +464,15 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
         // Don't block picking events for other UI roots.
         Pickable::IGNORE,
         children![
-            color_picker(Some(tile), image.clone(), true),
+            color_picker(
+                Some(tile),
+                image.clone(),
+                true,
+                ColorPickerButton {
+                    index: 99, // disabled
+                    ..default()
+                }
+            ),
             (
                 Node {
                     display: Display::Grid,
@@ -471,7 +485,7 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     for i in 0..rule.mask.len() {
                         if i == 4 {
                             parent.spawn(direction_picker(
-                                rule.mask[i],
+                                rule.invert,
                                 rule.invert,
                                 true,
                                 InvertToggleButton { tile },
@@ -486,14 +500,41 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     }
                 }),),
             ),
-            color_picker(rule.tiles[0], image.clone(), false),
-            color_picker(rule.tiles[1], image.clone(), false),
+            color_picker(
+                rule.tiles[0],
+                image.clone(),
+                false,
+                ColorPickerButton {
+                    tile,
+                    index: 0,
+                    color: rule.tiles[0]
+                }
+            ),
+            color_picker(
+                rule.tiles[1],
+                image.clone(),
+                false,
+                ColorPickerButton {
+                    tile,
+                    index: 1,
+                    color: rule.tiles[1]
+                }
+            ),
             (
                 Text::new("→"),
                 TextColor(DISABLED),
                 TextFont::from_font_size(24.0),
             ),
-            color_picker(rule.result, image.clone(), false),
+            color_picker(
+                rule.result,
+                image.clone(),
+                false,
+                ColorPickerButton {
+                    tile,
+                    index: 2,
+                    color: rule.result
+                }
+            ),
         ],
     )
 }

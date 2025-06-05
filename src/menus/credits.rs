@@ -51,6 +51,10 @@ fn assets() -> impl Bundle {
             "Bevy logo",
             "All rights reserved by the Bevy Foundation, permission granted for splash screen use when unmodified",
         ],
+        [
+            "Special thanks to",
+            "the Bevy and Rust community for the plethora of examples without which this game would not exist",
+        ],
     ])
 }
 
