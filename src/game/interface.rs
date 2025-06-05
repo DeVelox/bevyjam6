@@ -5,7 +5,7 @@ use bevy::{ecs::spawn::SpawnIter, prelude::*};
 use crate::{
     menus::Menu,
     screens::Screen,
-    theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, Sidebar},
+    theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, LeftSidebar, RightSidebar},
 };
 
 use super::{
@@ -42,7 +42,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (spawn_simulation_ui, spawn_rules_ui.after(spawn_level)),
+        (spawn_simulation_ui, spawn_rules_ui.after(spawn_level)).chain(),
     );
     app.add_systems(Update, update_ui_scale);
     app.add_observer(change_font);
@@ -50,29 +50,25 @@ pub(super) fn plugin(app: &mut App) {
 
 fn spawn_rules_ui(
     mut commands: Commands,
-    sidebars: Query<(Entity, &Name, Option<&Children>), With<Sidebar>>,
+    sidebar: Single<(Entity, Option<&Children>), With<LeftSidebar>>,
     level_assets: Res<LevelAssets>,
     player_input: Res<PlayerRules>,
 ) {
-    for (entity, name, children) in &sidebars {
-        if name.as_str() == "Left Sidebar" {
-            if let Some(children) = children {
-                for child in children.iter() {
-                    commands.entity(child).despawn();
-                }
-            }
-            let rule_widgets: Vec<_> = player_input
-                .rules
-                .iter()
-                .map(|(tile, rule)| {
-                    widget::rule_ui(*tile, rule.clone(), level_assets.tilesheet.clone())
-                })
-                .collect();
-            commands
-                .entity(entity)
-                .insert(Children::spawn(SpawnIter(rule_widgets.into_iter())));
+    let (entity, children) = sidebar.into_inner();
+    info!("Left Sidebar");
+    if let Some(children) = children {
+        for child in children.iter() {
+            commands.entity(child).despawn();
         }
     }
+    let rule_widgets: Vec<_> = player_input
+        .rules
+        .iter()
+        .map(|(tile, rule)| widget::rule_ui(*tile, rule.clone(), level_assets.tilesheet.clone()))
+        .collect();
+    commands
+        .entity(entity)
+        .insert(Children::spawn(SpawnIter(rule_widgets.into_iter())));
 }
 
 fn spawn_simulation_ui(mut commands: Commands) {
@@ -84,13 +80,15 @@ fn spawn_simulation_ui(mut commands: Commands) {
             (widget::ui_split(
                 "Left Sidebar",
                 AlignItems::FlexEnd,
-                JustifyContent::Center
+                JustifyContent::Center,
+                LeftSidebar
             ),),
             (
                 widget::ui_split(
                     "Right Sidebar",
                     AlignItems::FlexStart,
-                    JustifyContent::FlexEnd
+                    JustifyContent::FlexEnd,
+                    RightSidebar
                 ),
                 children![
                     (

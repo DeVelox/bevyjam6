@@ -252,12 +252,17 @@ pub const BUTTON_SIZE_ALT: ButtonSize = ButtonSize {
     width: 146.0,
     height: 60.0,
 };
+
 #[derive(Component)]
-pub struct Sidebar;
+pub struct LeftSidebar;
+#[derive(Component)]
+pub struct RightSidebar;
+
 pub fn ui_split(
     name: impl Into<Cow<'static, str>>,
     align: AlignItems,
     justify: JustifyContent,
+    tag: impl Bundle,
 ) -> impl Bundle {
     const MARGIN: Val = Val::Px(550.0);
     let mut padding = UiRect::default();
@@ -272,7 +277,7 @@ pub fn ui_split(
     };
     (
         Name::new(name),
-        Sidebar,
+        tag,
         Node {
             width: Percent(50.0),
             height: Px(920.0),
