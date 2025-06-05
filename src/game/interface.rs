@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    level::{Level, LevelAssets, Switch},
+    level::{Level, LevelAssets, Puzzle, Switch},
     logic::{
         AutomaticSimulation, DisableControls, reset_simulation, step_simulation, toggle_simulation,
     },
@@ -55,7 +55,6 @@ fn spawn_rules_ui(
     player_input: Res<PlayerRules>,
 ) {
     let (entity, children) = sidebar.into_inner();
-    info!("Left Sidebar");
     if let Some(children) = children {
         for child in children.iter() {
             commands.entity(child).despawn();
@@ -91,6 +90,8 @@ fn spawn_simulation_ui(mut commands: Commands) {
                     RightSidebar
                 ),
                 children![
+                    #[cfg(feature = "dev")]
+                    (widget::button("Print", print_level),),
                     (
                         widget::button("Next Level", go_next_level),
                         Visibility::Hidden,
@@ -260,6 +261,14 @@ fn handle_invert_buttons(
         }
     }
 }
+fn print_level(_: Trigger<Pointer<Click>>, query: Query<&Tile, With<Puzzle>>) {
+    let mut level = vec![];
+    for tile in &query {
+        level.push(*tile as u8);
+    }
+    warn!("{:?}", level);
+}
+
 // fn setup_egui(
 //     mut contexts: EguiContexts,
 //     level_assets: Res<LevelAssets>,
