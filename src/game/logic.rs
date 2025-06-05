@@ -31,9 +31,12 @@ pub(super) fn plugin(app: &mut App) {
     //         ),
     //     ]),
     // });
-    app.init_resource::<GridIterations>();
     app.init_state::<IterationState>();
-    app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
+    app.init_resource::<GridIterations>();
+    app.add_systems(
+        OnEnter(IterationState::Simulating),
+        simulation_step.run_if(not(resource_exists::<Victory>)),
+    );
     app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
     app.add_systems(
         OnExit(IterationState::Displaying),
@@ -88,6 +91,10 @@ impl GridIterations {
         current[index] != previous[index]
     }
 }
+#[derive(Resource)]
+pub struct Victory;
+#[derive(Resource)]
+pub struct DisableControls;
 
 fn simulation_system(
     mut commands: Commands,
@@ -99,6 +106,7 @@ fn simulation_system(
         return;
     }
     state.set(IterationState::Simulating);
+    commands.insert_resource(DisableControls);
 }
 pub fn step_simulation(
     _: Trigger<Pointer<Click>>,
@@ -170,6 +178,8 @@ fn reset_step(
 ) {
     grid.grid.truncate(1);
     commands.remove_resource::<AutomaticSimulation>();
+    commands.remove_resource::<DisableControls>();
+    commands.remove_resource::<Victory>();
     state.set(IterationState::Displaying);
 }
 fn check_faces(
@@ -191,6 +201,7 @@ fn check_wincon(
     button: Single<Entity, With<NextLevel>>,
 ) {
     if grid.grid.last().unwrap_or(&Vec::new()) == &grid.goal {
+        commands.insert_resource(Victory);
         commands.remove_resource::<AutomaticSimulation>();
         commands
             .entity(button.into_inner())

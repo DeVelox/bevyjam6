@@ -484,7 +484,7 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     ..default()
                 },
                 Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
-                    for i in 0..rule.mask.len() {
+                    for i in [5, 6, 7, 3, 4, 0, 1, 2] {
                         if i == 4 {
                             parent.spawn(direction_picker(
                                 rule.invert,

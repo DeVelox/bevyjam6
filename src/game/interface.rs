@@ -10,7 +10,9 @@ use crate::{
 
 use super::{
     level::{Level, LevelAssets, Switch},
-    logic::{AutomaticSimulation, reset_simulation, step_simulation, toggle_simulation},
+    logic::{
+        AutomaticSimulation, DisableControls, reset_simulation, step_simulation, toggle_simulation,
+    },
 };
 use super::{
     level::{Tile, spawn_level},
@@ -29,9 +31,12 @@ pub(super) fn plugin(app: &mut App) {
         (
             spawn_rules_ui.run_if(resource_changed::<PlayerRules>),
             update_button_text,
-            handle_mask_buttons,
-            handle_invert_buttons,
-            handle_color_pickers,
+            (
+                handle_mask_buttons,
+                handle_invert_buttons,
+                handle_color_pickers,
+            )
+                .run_if(not(resource_exists::<DisableControls>)),
         )
             .run_if(in_state(Screen::Gameplay).and(in_state(Menu::None))),
     );
