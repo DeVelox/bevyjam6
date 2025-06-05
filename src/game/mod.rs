@@ -6,15 +6,15 @@
 use bevy::prelude::*;
 
 pub mod animation;
+pub mod interface;
 pub mod level;
 pub mod logic;
-pub mod rules;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         level::plugin,
         logic::plugin,
-        rules::plugin,
+        interface::plugin,
         animation::plugin,
     ));
 }

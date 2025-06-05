@@ -183,7 +183,7 @@ impl Utility for Grid {
         tiles
     }
 
-    fn check_neighbours(&self, index: usize, input: &PlayerRules) -> Option<Tile> {
+    fn check_neighbours(&self, index: usize, rules: &PlayerRules) -> Option<Tile> {
         // probably inefficient
         let gs = self.len().isqrt() as i32;
         let offsets = &[-(gs + 1), -gs, -(gs - 1), -1, 1, gs - 1, gs, gs + 1];
@@ -191,7 +191,7 @@ impl Utility for Grid {
         let right_offset = &[-(gs - 1), 1, gs + 1];
         let left_edge = index % gs as usize == 0;
         let right_edge = (index + 1) % gs as usize == 0;
-        if let Some(rule) = &input.rules.get(&Tile::from_u8(self[index])) {
+        if let Some(rule) = &rules.rules.get(&Tile::from_u8(self[index])) {
             let neighbours: Vec<Tile> = offsets
                 .iter()
                 .enumerate()
@@ -214,7 +214,7 @@ impl Utility for Grid {
             rule.tiles
                 .iter()
                 .flatten()
-                .all(|tile| neighbours.contains(tile))
+                .all(|tile| neighbours.contains(tile) ^ rule.invert)
                 .then(|| rule.result)
                 .flatten()
         } else {

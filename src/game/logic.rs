@@ -6,8 +6,8 @@ use crate::{menus::Menu, screens::Screen};
 
 use super::{
     animation::AnimationConfig,
+    interface::show_next_level,
     level::{Face, Grid, LevelAssets, Puzzle, Tile, Utility},
-    rules::show_next_level,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -59,6 +59,7 @@ pub struct PlayerRules {
 #[derive(Clone, Default)]
 pub struct Rule {
     pub tiles: [Option<Tile>; 2],
+    pub invert: bool,
     pub mask: [bool; 8],
     pub result: Option<Tile>,
 }
