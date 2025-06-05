@@ -2,13 +2,12 @@ use std::time::Duration;
 
 use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::on_timer};
 
-use crate::{menus::Menu, screens::Screen};
-
 use super::{
     animation::AnimationConfig,
-    interface::show_next_level,
+    interface::NextLevel,
     level::{Face, Grid, LevelAssets, Puzzle, Tile, Utility},
 };
+use crate::{menus::Menu, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<PlayerRules>();
@@ -35,11 +34,11 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridIterations>();
     app.init_state::<IterationState>();
     app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
+    app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
     app.add_systems(
-        OnEnter(IterationState::Displaying),
-        (rendering_step, check_faces, check_wincon),
+        OnExit(IterationState::Displaying),
+        (rendering_step, check_faces, check_wincon).chain(),
     );
-    app.add_systems(OnEnter(IterationState::Victory), show_next_level);
     app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
         Update,
@@ -88,18 +87,6 @@ impl GridIterations {
         current[index] != previous[index]
     }
 }
-#[derive(Resource, Default)]
-pub struct AutomaticSimulation;
-
-#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub enum IterationState {
-    #[default]
-    Paused,
-    Simulating,
-    Displaying,
-    Victory,
-    Reset,
-}
 
 fn simulation_system(
     mut commands: Commands,
@@ -111,17 +98,6 @@ fn simulation_system(
         return;
     }
     state.set(IterationState::Simulating);
-}
-pub fn toggle_simulation(
-    _: Trigger<Pointer<Click>>,
-    auto: Option<Res<AutomaticSimulation>>,
-    mut commands: Commands,
-) {
-    if auto.is_some() {
-        commands.remove_resource::<AutomaticSimulation>();
-    } else {
-        commands.init_resource::<AutomaticSimulation>();
-    }
 }
 pub fn step_simulation(
     _: Trigger<Pointer<Click>>,
@@ -156,31 +132,44 @@ fn rendering_step(
     level_assets: Res<LevelAssets>,
     grid: Res<GridIterations>,
     board: Query<Entity, With<Puzzle>>,
+    state: Res<State<IterationState>>,
 ) {
     let reset = grid.grid.len() == 1;
     let image = level_assets.tilesheet.clone();
     let atlas = level_assets.atlas.clone();
     for (i, entity) in board.iter().enumerate() {
         let tile = Tile::from_u8(grid.grid.last().unwrap()[i]);
-        let old_tile = Tile::from_u8(grid.grid.get(grid.grid.len().saturating_sub(2)).unwrap()[i]);
         if grid.changed(i) || reset {
-            commands.entity(entity).insert(tile);
-            commands.spawn((
-                ChildOf(entity),
-                AnimationConfig::new(12, 16, 20),
-                Sprite {
-                    image: image.clone(),
-                    color: old_tile.color(),
-                    custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
-                    texture_atlas: Some(TextureAtlas {
-                        layout: atlas.clone(),
-                        index: 12,
-                    }),
-                    ..default()
-                },
-            ));
+            if *state.get() == IterationState::Displaying {
+                commands.spawn((
+                    ChildOf(entity),
+                    AnimationConfig::new(12, 16, 15),
+                    StateScoped(IterationState::Displaying),
+                    Sprite {
+                        image: image.clone(),
+                        color: tile.color(),
+                        custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
+                        texture_atlas: Some(TextureAtlas {
+                            layout: atlas.clone(),
+                            index: 12,
+                        }),
+                        ..default()
+                    },
+                ));
+            } else {
+                commands.entity(entity).insert(tile);
+            }
         }
     }
+}
+fn reset_step(
+    mut commands: Commands,
+    mut grid: ResMut<GridIterations>,
+    mut state: ResMut<NextState<IterationState>>,
+) {
+    grid.grid.truncate(1);
+    commands.remove_resource::<AutomaticSimulation>();
+    state.set(IterationState::Displaying);
 }
 fn check_faces(
     mut commands: Commands,
@@ -198,19 +187,36 @@ fn check_faces(
 fn check_wincon(
     mut commands: Commands,
     grid: Res<GridIterations>,
-    mut state: ResMut<NextState<IterationState>>,
+    button: Single<Entity, With<NextLevel>>,
 ) {
     if grid.grid.last().unwrap_or(&Vec::new()) == &grid.goal {
         commands.remove_resource::<AutomaticSimulation>();
-        state.set(IterationState::Victory);
+        commands
+            .entity(button.into_inner())
+            .insert(Visibility::Visible);
     }
 }
-fn reset_step(
+pub fn toggle_simulation(
+    _: Trigger<Pointer<Click>>,
+    auto: Option<Res<AutomaticSimulation>>,
     mut commands: Commands,
-    mut grid: ResMut<GridIterations>,
-    mut state: ResMut<NextState<IterationState>>,
 ) {
-    grid.grid.truncate(1);
-    commands.remove_resource::<AutomaticSimulation>();
-    state.set(IterationState::Displaying);
+    if auto.is_some() {
+        commands.remove_resource::<AutomaticSimulation>();
+    } else {
+        commands.init_resource::<AutomaticSimulation>();
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct AutomaticSimulation;
+
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[states(scoped_entities)]
+pub enum IterationState {
+    #[default]
+    Ready,
+    Simulating,
+    Displaying,
+    Reset,
 }

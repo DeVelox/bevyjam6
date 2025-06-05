@@ -123,11 +123,6 @@ fn spawn_simulation_ui(mut commands: Commands) {
 }
 #[derive(Component)]
 pub struct NextLevel;
-pub fn show_next_level(mut commands: Commands, button: Single<Entity, With<NextLevel>>) {
-    commands
-        .entity(button.into_inner())
-        .insert(Visibility::Visible);
-}
 pub fn go_next_level(
     _: Trigger<Pointer<Click>>,
     current_level: Res<State<Level>>,

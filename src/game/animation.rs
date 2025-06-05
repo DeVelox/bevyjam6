@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
+use super::logic::IterationState;
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, execute_animations);
 }
@@ -32,10 +34,10 @@ impl AnimationConfig {
 // `last_sprite_index` (both defined in `AnimationConfig`).
 fn execute_animations(
     time: Res<Time>,
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut AnimationConfig, &mut Sprite)>,
+    mut state: ResMut<NextState<IterationState>>,
+    mut query: Query<(&mut AnimationConfig, &mut Sprite)>,
 ) {
-    for (entity, mut config, mut sprite) in &mut query {
+    for (mut config, mut sprite) in &mut query {
         // We track how long the current sprite has been displayed for
         config.frame_timer.tick(time.delta());
 
@@ -45,7 +47,7 @@ fn execute_animations(
                 if atlas.index == config.last_sprite_index {
                     // ...and it IS the last frame, then we move back to the first frame and stop.
                     atlas.index = config.first_sprite_index;
-                    commands.entity(entity).despawn();
+                    state.set(IterationState::Ready);
                 } else {
                     // ...and it is NOT the last frame, then we move to the next frame...
                     atlas.index += 1;
