@@ -8,10 +8,13 @@ use crate::{
     theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, Sidebar},
 };
 
-use super::{level::spawn_level, logic::PlayerRules};
 use super::{
     level::{Level, LevelAssets, Switch},
     logic::{AutomaticSimulation, reset_simulation, step_simulation, toggle_simulation},
+};
+use super::{
+    level::{Tile, spawn_level},
+    logic::PlayerRules,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -26,6 +29,8 @@ pub(super) fn plugin(app: &mut App) {
         (
             spawn_rules_ui.run_if(resource_changed::<PlayerRules>),
             update_button_text,
+            handle_mask_buttons,
+            handle_invert_buttons,
         )
             .run_if(in_state(Screen::Gameplay).and(in_state(Menu::None))),
     );
@@ -173,6 +178,49 @@ fn change_font(
     text_font.font = level_assets.font.clone();
 }
 
+#[derive(Component)]
+pub struct MaskToggleButton {
+    pub tile: Tile,
+    pub index: usize,
+}
+
+#[derive(Component)]
+pub struct InvertToggleButton {
+    pub tile: Tile,
+}
+
+#[derive(Component)]
+pub struct ColorPickerButton {
+    pub tile: Tile,
+    pub index: usize,
+    pub color: Option<Tile>,
+}
+
+fn handle_mask_buttons(
+    mut interaction_query: Query<(&Interaction, &MaskToggleButton), Changed<Interaction>>,
+    mut rules: ResMut<PlayerRules>,
+) {
+    for (interaction, button) in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Some(rule) = rules.rules.get_mut(&button.tile) {
+                rule.mask[button.index] = !rule.mask[button.index];
+            }
+        }
+    }
+}
+
+fn handle_invert_buttons(
+    mut interaction_query: Query<(&Interaction, &InvertToggleButton), Changed<Interaction>>,
+    mut rules: ResMut<PlayerRules>,
+) {
+    for (interaction, button) in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Some(rule) = rules.rules.get_mut(&button.tile) {
+                rule.invert = !rule.invert;
+            }
+        }
+    }
+}
 // fn setup_egui(
 //     mut contexts: EguiContexts,
 //     level_assets: Res<LevelAssets>,

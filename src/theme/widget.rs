@@ -9,7 +9,11 @@ use bevy::{
 };
 
 use crate::{
-    game::{level::Tile, logic::Rule},
+    game::{
+        interface::{InvertToggleButton, MaskToggleButton},
+        level::Tile,
+        logic::Rule,
+    },
     theme::{interaction::InteractionPalette, palette::*},
 };
 
@@ -305,18 +309,23 @@ pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
 pub struct ColorPickerEvent {
     pub color: Color,
 }
-pub fn color_picker(tile: Option<Tile>, image: Handle<Image>, is_key: bool) -> impl Bundle {
+pub fn color_picker(tile: Option<Tile>, _image: Handle<Image>, is_key: bool) -> impl Bundle {
     let mut offset = Vec2::ZERO;
     if let Some(tile) = tile {
         offset.x = tile as u8 as f32;
     } else {
-        offset.x = Tile::all().len() as f32;
+        offset.x = Tile::all().len() as f32 - 1.0;
         offset.y = 1.0;
     }
     let color = if is_key {
         BUTTON_TEXT_ALT
     } else {
         BUTTON_BACKGROUND
+    };
+    let background_color = if let Some(tile) = tile {
+        tile.color()
+    } else {
+        SOCKET
     };
     (
         Name::new("Color Picker"),
@@ -339,17 +348,18 @@ pub fn color_picker(tile: Option<Tile>, image: Handle<Image>, is_key: bool) -> i
                             height: Val::Px(50.0),
                             ..default()
                         },
-                        ImageNode {
-                            image: image,
-                            image_mode: NodeImageMode::Auto,
-                            rect: Some(Rect::new(
-                                512.0 * offset.x,
-                                512.0 * offset.y,
-                                512.0 * (offset.x + 1.0),
-                                512.0 * (offset.y + 1.0)
-                            )),
-                            ..default()
-                        },
+                        BackgroundColor(background_color),
+                        // ImageNode {
+                        //     image: image,
+                        //     image_mode: NodeImageMode::Auto,
+                        //     rect: Some(Rect::new(
+                        //         512.0 * offset.x,
+                        //         512.0 * offset.y,
+                        //         512.0 * (offset.x + 1.0),
+                        //         512.0 * (offset.y + 1.0)
+                        //     )),
+                        //     ..default()
+                        // },
                         // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,
                     )],
@@ -367,7 +377,12 @@ pub fn color_picker(tile: Option<Tile>, image: Handle<Image>, is_key: bool) -> i
         })),
     )
 }
-pub fn direction_picker(value: bool, invert: bool, is_invert_toggle: bool) -> impl Bundle {
+pub fn direction_picker(
+    value: bool,
+    invert: bool,
+    is_invert_toggle: bool,
+    action: impl Bundle,
+) -> impl Bundle {
     let color = if invert {
         if value { INVERTED } else { DISABLED }
     } else {
@@ -386,6 +401,7 @@ pub fn direction_picker(value: bool, invert: bool, is_invert_toggle: bool) -> im
                 .spawn((
                     Name::new("Picker Inner"),
                     Button,
+                    action,
                     children![(
                         Name::new("Picker Direction"),
                         Node {
@@ -451,17 +467,24 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     grid_template_columns: RepeatedGridTrack::px(3, 16.0),
                     ..default()
                 },
-                children![
-                    direction_picker(rule.mask[0], rule.invert, false),
-                    direction_picker(rule.mask[1], rule.invert, false),
-                    direction_picker(rule.mask[2], rule.invert, false),
-                    direction_picker(rule.mask[3], rule.invert, false),
-                    direction_picker(rule.invert, rule.invert, true),
-                    direction_picker(rule.mask[4], rule.invert, false),
-                    direction_picker(rule.mask[5], rule.invert, false),
-                    direction_picker(rule.mask[6], rule.invert, false),
-                    direction_picker(rule.mask[7], rule.invert, false),
-                ]
+                Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+                    for i in 0..rule.mask.len() {
+                        if i == 4 {
+                            parent.spawn(direction_picker(
+                                rule.mask[i],
+                                rule.invert,
+                                true,
+                                InvertToggleButton { tile },
+                            ));
+                        }
+                        parent.spawn(direction_picker(
+                            rule.mask[i],
+                            rule.invert,
+                            false,
+                            MaskToggleButton { tile, index: i },
+                        ));
+                    }
+                }),),
             ),
             color_picker(rule.tiles[0], image.clone(), false),
             color_picker(rule.tiles[1], image.clone(), false),
