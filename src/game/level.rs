@@ -107,6 +107,7 @@ pub fn spawn_level(
             tiles: [None, Some(Tile::from_u8(tile))],
             mask: [false, false, true, false, true, false, false, true],
             result: Some(result),
+            invert: false,
             ..default()
         });
     }

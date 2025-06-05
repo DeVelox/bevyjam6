@@ -305,7 +305,7 @@ pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
 pub struct ColorPickerEvent {
     pub color: Color,
 }
-pub fn color_picker(tile: Option<Tile>, image: Handle<Image>) -> impl Bundle {
+pub fn color_picker(tile: Option<Tile>, image: Handle<Image>, is_key: bool) -> impl Bundle {
     let mut offset = Vec2::ZERO;
     if let Some(tile) = tile {
         offset.x = tile as u8 as f32;
@@ -313,6 +313,11 @@ pub fn color_picker(tile: Option<Tile>, image: Handle<Image>) -> impl Bundle {
         offset.x = Tile::all().len() as f32;
         offset.y = 1.0;
     }
+    let color = if is_key {
+        BUTTON_TEXT_ALT
+    } else {
+        BUTTON_BACKGROUND
+    };
     (
         Name::new("Color Picker"),
         Node::default(),
@@ -324,8 +329,8 @@ pub fn color_picker(tile: Option<Tile>, image: Handle<Image>) -> impl Bundle {
                     BackgroundColor(BUTTON_TEXT_ALT),
                     InteractionPalette {
                         none: BUTTON_TEXT_ALT,
-                        hovered: BUTTON_BACKGROUND,
-                        pressed: BUTTON_BACKGROUND,
+                        hovered: color,
+                        pressed: color,
                     },
                     children![(
                         Name::new("Picker Color"),
@@ -362,6 +367,64 @@ pub fn color_picker(tile: Option<Tile>, image: Handle<Image>) -> impl Bundle {
         })),
     )
 }
+pub fn direction_picker(value: bool, invert: bool, is_invert_toggle: bool) -> impl Bundle {
+    let color = if invert {
+        if value { INVERTED } else { DISABLED }
+    } else {
+        if value { ENABLED } else { DISABLED }
+    };
+    let color = if is_invert_toggle {
+        if value { INVERTED } else { ENABLED }
+    } else {
+        color
+    };
+    (
+        Name::new("Direction Picker"),
+        Node::default(),
+        Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Picker Inner"),
+                    Button,
+                    children![(
+                        Name::new("Picker Direction"),
+                        Node {
+                            width: Val::Px(14.0),
+                            height: Val::Px(14.0),
+                            ..default()
+                        },
+                        BackgroundColor(color),
+                        BorderRadius::all(Val::Px(match is_invert_toggle {
+                            true => 10.0,
+                            false => 0.0,
+                        })),
+                        // if is_invert_toggle {
+                        //     if value { Text::new("") } else { Text::new("x") }
+                        // } else {
+                        //     Text::new("")
+                        // },
+                        // TextColor(BUTTON_TEXT_ALT),
+                        // Don't bubble picking events from the text up to the button.
+                        Pickable::IGNORE,
+                    )],
+                ))
+                .insert((
+                    Node {
+                        width: Px(16.0),
+                        height: Px(16.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    BackgroundColor(BUTTON_TEXT_ALT),
+                    BorderRadius::all(Val::Px(match is_invert_toggle {
+                        true => 10.0,
+                        false => 0.0,
+                    })),
+                ));
+        })),
+    )
+}
 pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
     (
         Name::new("Rule UI"),
@@ -379,11 +442,35 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
         // Don't block picking events for other UI roots.
         Pickable::IGNORE,
         children![
-            color_picker(Some(tile), image.clone()),
-            color_picker(rule.tiles[0], image.clone()),
-            color_picker(rule.tiles[1], image.clone()),
-            Text::new("→"),
-            color_picker(rule.result, image.clone()),
+            color_picker(Some(tile), image.clone(), true),
+            (
+                Node {
+                    display: Display::Grid,
+                    row_gap: Px(6.0),
+                    column_gap: Px(6.0),
+                    grid_template_columns: RepeatedGridTrack::px(3, 16.0),
+                    ..default()
+                },
+                children![
+                    direction_picker(rule.mask[0], rule.invert, false),
+                    direction_picker(rule.mask[1], rule.invert, false),
+                    direction_picker(rule.mask[2], rule.invert, false),
+                    direction_picker(rule.mask[3], rule.invert, false),
+                    direction_picker(rule.invert, rule.invert, true),
+                    direction_picker(rule.mask[4], rule.invert, false),
+                    direction_picker(rule.mask[5], rule.invert, false),
+                    direction_picker(rule.mask[6], rule.invert, false),
+                    direction_picker(rule.mask[7], rule.invert, false),
+                ]
+            ),
+            color_picker(rule.tiles[0], image.clone(), false),
+            color_picker(rule.tiles[1], image.clone(), false),
+            (
+                Text::new("→"),
+                TextColor(DISABLED),
+                TextFont::from_font_size(24.0),
+            ),
+            color_picker(rule.result, image.clone(), false),
         ],
     )
 }

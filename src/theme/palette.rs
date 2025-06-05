@@ -23,3 +23,7 @@ pub const PURPLE: Color = Color::srgb(0.369, 0.357, 0.549);
 pub const BROWN: Color = Color::srgb(0.431, 0.298, 0.188);
 pub const PINK: Color = Color::srgb(1.000, 0.635, 0.675);
 pub const EMPTY: Color = Color::srgb(1.000, 1.000, 1.000);
+
+pub const ENABLED: Color = Color::srgb(0.616, 0.902, 0.310);
+pub const DISABLED: Color = Color::srgb(0.965, 0.910, 0.878);
+pub const INVERTED: Color = Color::srgb(0.925, 0.153, 0.247);

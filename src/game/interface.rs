@@ -67,7 +67,7 @@ fn spawn_rules_ui(
 fn spawn_simulation_ui(mut commands: Commands) {
     commands.spawn((
         widget::ui_row("Gameplay UI"),
-        GlobalZIndex(2),
+        GlobalZIndex(1),
         StateScoped(Screen::Gameplay),
         children![
             (widget::ui_split(
