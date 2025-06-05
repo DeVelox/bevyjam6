@@ -391,8 +391,10 @@ pub fn direction_picker(
 ) -> impl Bundle {
     let color = if invert {
         if value { INVERTED } else { DISABLED }
+    } else if value {
+        ENABLED
     } else {
-        if value { ENABLED } else { DISABLED }
+        DISABLED
     };
     let color = if is_invert_toggle {
         if value { INVERTED } else { ENABLED }

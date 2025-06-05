@@ -198,7 +198,7 @@ pub struct ColorPickerButton {
 }
 
 impl ColorPickerButton {
-    pub fn change_color(&mut self, color_pool: &Vec<Option<Tile>>) -> Option<Tile> {
+    pub fn change_color(&mut self, color_pool: &[Option<Tile>]) -> Option<Tile> {
         let mut new_color = color_pool[0];
         for (index, &color) in color_pool.iter().enumerate() {
             if color == self.color {
