@@ -5,7 +5,7 @@ use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::
 use super::{
     animation::AnimationConfig,
     interface::NextLevel,
-    level::{Face, Grid, LevelAssets, Puzzle, Tile, Utility},
+    level::{Face, Grid, LevelAssets, PADDING, Puzzle, Tile, Utility},
 };
 use crate::{menus::Menu, screens::Screen};
 
@@ -148,7 +148,7 @@ fn rendering_step(
                     Sprite {
                         image: image.clone(),
                         color: tile.color(),
-                        custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
+                        custom_size: Some(Vec2::splat(level_assets.tile_size - PADDING)),
                         texture_atlas: Some(TextureAtlas {
                             layout: atlas.clone(),
                             index: 12,

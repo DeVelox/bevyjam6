@@ -130,7 +130,7 @@ pub trait Utility {
 }
 const TILE_SIZE: f32 = 120.;
 const MINI_SCALE: f32 = 3.;
-const PADDING: f32 = 8.;
+pub const PADDING: f32 = 8.;
 impl Utility for Grid {
     fn render_puzzle(&self, parent: Entity) -> (Vec<impl Bundle>, f32) {
         let grid_size = self.len().isqrt();
