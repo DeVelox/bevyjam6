@@ -9,7 +9,7 @@ use bevy::reflect::TypePath;
 
 use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
 
-use super::logic::{GridIterations, IterationState, PlayerInput};
+use super::logic::{GridIterations, IterationState, PlayerRules, Rule};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();
@@ -77,8 +77,10 @@ pub fn spawn_level(
             )],
         ))
         .id();
+    let mut present_tiles: Grid = default();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let grid = &level.levels[*current_level.get() as usize];
+        present_tiles.extend(grid);
         grid_iter.grid.clear();
         grid_iter.grid.push((*grid).to_vec());
         let (puzzle, tile_size) = grid.render_puzzle(parent);
@@ -89,9 +91,26 @@ pub fn spawn_level(
     }
     if let Some(solution) = levels.get(level_assets.solutions.id()) {
         let grid = &solution.levels[*current_level.get() as usize];
+        present_tiles.extend(grid);
         grid_iter.goal = (*grid).to_vec();
         commands.spawn_batch(grid.render_solution(parent));
     }
+    let mut rules = PlayerRules::default();
+    // Just an example rule preset, will init with Rule::default()
+    for tile in present_tiles {
+        let result = match tile {
+            0 => Tile::Green,
+            1 => Tile::Red,
+            _ => Tile::Empty,
+        };
+        rules.rules.entry(Tile::from_u8(tile)).or_insert(Rule {
+            tiles: [None, Some(Tile::from_u8(tile))],
+            mask: [false, false, true, false, true, false, false, true],
+            result: Some(result),
+            ..default()
+        });
+    }
+    commands.insert_resource(rules);
     state.set(IterationState::Reset);
 }
 
@@ -107,7 +126,7 @@ pub struct Levels {
 pub trait Utility {
     fn render_puzzle(&self, parent: Entity) -> (Vec<impl Bundle>, f32);
     fn render_solution(&self, parent: Entity) -> Vec<(Solution, ChildOf, Transform, Sprite)>;
-    fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile>;
+    fn check_neighbours(&self, index: usize, input: &PlayerRules) -> Option<Tile>;
 }
 const TILE_SIZE: f32 = 120.;
 const MINI_SCALE: f32 = 3.;
@@ -164,7 +183,7 @@ impl Utility for Grid {
         tiles
     }
 
-    fn check_neighbours(&self, index: usize, input: &PlayerInput) -> Option<Tile> {
+    fn check_neighbours(&self, index: usize, input: &PlayerRules) -> Option<Tile> {
         // probably inefficient
         let gs = self.len().isqrt() as i32;
         let offsets = &[-(gs + 1), -gs, -(gs - 1), -1, 1, gs - 1, gs, gs + 1];
@@ -192,11 +211,12 @@ impl Utility for Grid {
                     }
                 })
                 .collect();
-            if rule.tiles.iter().all(|tile| neighbours.contains(tile)) {
-                Some(rule.result)
-            } else {
-                None
-            }
+            rule.tiles
+                .iter()
+                .flatten()
+                .all(|tile| neighbours.contains(tile))
+                .then(|| rule.result)
+                .flatten()
         } else {
             None
         }
@@ -207,34 +227,21 @@ impl Utility for Grid {
 #[states(scoped_entities)]
 pub enum Level {
     #[default]
-    Intro,
     Beginner,
-    Intermediate,
     Expert,
 }
 
 pub trait Switch {
     fn next(&self) -> Self;
-    // fn prev(&self) -> Self;
 }
 
 impl Switch for Level {
     fn next(&self) -> Self {
         match self {
-            Level::Intro => Level::Beginner,
-            Level::Beginner => Level::Intermediate,
-            Level::Intermediate => Level::Expert,
-            Level::Expert => Level::Intro,
+            Level::Beginner => Level::Expert,
+            Level::Expert => Level::Beginner,
         }
     }
-    // fn prev(&self) -> Self {
-    //     match self {
-    //         Level::Expert => Level::Intermediate,
-    //         Level::Intermediate => Level::Beginner,
-    //         Level::Beginner => Level::Intro,
-    //         Level::Intro => Level::Expert,
-    //     }
-    // }
 }
 
 #[derive(Component, Default, Copy, Clone, Eq, Hash, PartialEq)]
@@ -307,5 +314,18 @@ impl Tile {
             Tile::Pink => PINK,
             Tile::Empty => EMPTY,
         }
+    }
+    pub fn all() -> [Tile; 9] {
+        [
+            Tile::Red,
+            Tile::Green,
+            Tile::Blue,
+            Tile::Yellow,
+            Tile::Orange,
+            Tile::Purple,
+            Tile::Brown,
+            Tile::Pink,
+            Tile::Empty,
+        ]
     }
 }

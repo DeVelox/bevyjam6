@@ -6,32 +6,32 @@ use crate::{menus::Menu, screens::Screen};
 
 use super::{
     animation::AnimationConfig,
-    input::show_next_level,
     level::{Face, Grid, LevelAssets, Puzzle, Tile, Utility},
+    rules::show_next_level,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // app.init_resource::<PlayerInput>();
-    app.insert_resource(PlayerInput {
-        rules: HashMap::from([
-            (
-                Tile::Red,
-                Rule {
-                    tiles: vec![Tile::Red],
-                    mask: [false, false, true, false, true, false, false, true],
-                    result: Tile::Green,
-                },
-            ),
-            (
-                Tile::Green,
-                Rule {
-                    tiles: vec![Tile::Green],
-                    mask: [false, false, true, false, true, false, false, true],
-                    result: Tile::Red,
-                },
-            ),
-        ]),
-    });
+    app.init_resource::<PlayerRules>();
+    // app.insert_resource(PlayerRules {
+    //     rules: HashMap::from([
+    //         (
+    //             Tile::Red,
+    //             Rule {
+    //                 tiles: vec![Tile::Red],
+    //                 mask: [false, false, true, false, true, false, false, true],
+    //                 result: Tile::Green,
+    //             },
+    //         ),
+    //         (
+    //             Tile::Green,
+    //             Rule {
+    //                 tiles: vec![Tile::Green],
+    //                 mask: [false, false, true, false, true, false, false, true],
+    //                 result: Tile::Red,
+    //             },
+    //         ),
+    //     ]),
+    // });
     app.init_resource::<GridIterations>();
     app.init_state::<IterationState>();
     app.add_systems(OnEnter(IterationState::Simulating), simulation_step);
@@ -53,13 +53,14 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Resource, Default)]
-pub struct PlayerInput {
+pub struct PlayerRules {
     pub rules: HashMap<Tile, Rule>,
 }
+#[derive(Clone, Default)]
 pub struct Rule {
-    pub tiles: Vec<Tile>,
+    pub tiles: [Option<Tile>; 2],
     pub mask: [bool; 8],
-    pub result: Tile,
+    pub result: Option<Tile>,
 }
 #[derive(Resource)]
 pub struct GridIterations {
@@ -134,7 +135,7 @@ pub fn reset_simulation(_: Trigger<Pointer<Click>>, mut state: ResMut<NextState<
 }
 
 fn simulation_step(
-    input: Res<PlayerInput>,
+    input: Res<PlayerRules>,
     mut grid: ResMut<GridIterations>,
     mut state: ResMut<NextState<IterationState>>,
 ) {
@@ -160,6 +161,7 @@ fn rendering_step(
     let atlas = level_assets.atlas.clone();
     for (i, entity) in board.iter().enumerate() {
         let tile = Tile::from_u8(grid.grid.last().unwrap()[i]);
+        let old_tile = Tile::from_u8(grid.grid.get(grid.grid.len().saturating_sub(2)).unwrap()[i]);
         if grid.changed(i) || reset {
             commands.entity(entity).insert(tile);
             commands.spawn((
@@ -167,7 +169,7 @@ fn rendering_step(
                 AnimationConfig::new(12, 16, 20),
                 Sprite {
                     image: image.clone(),
-                    color: tile.color(),
+                    color: old_tile.color(),
                     custom_size: Some(Vec2::splat(level_assets.tile_size * 1.5)),
                     texture_atlas: Some(TextureAtlas {
                         layout: atlas.clone(),

@@ -8,7 +8,10 @@ use bevy::{
     ui::Val::*,
 };
 
-use crate::theme::{interaction::InteractionPalette, palette::*};
+use crate::{
+    game::{level::Tile, logic::Rule},
+    theme::{interaction::InteractionPalette, palette::*},
+};
 
 /// A root UI node that fills the window and centers its content.
 pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
@@ -245,28 +248,35 @@ pub const BUTTON_SIZE_ALT: ButtonSize = ButtonSize {
     width: 146.0,
     height: 60.0,
 };
-pub fn ui_split(name: impl Into<Cow<'static, str>>, align: AlignItems) -> impl Bundle {
+#[derive(Component)]
+pub struct Sidebar;
+pub fn ui_split(
+    name: impl Into<Cow<'static, str>>,
+    align: AlignItems,
+    justify: JustifyContent,
+) -> impl Bundle {
     const MARGIN: Val = Val::Px(550.0);
-    let mut margin = UiRect::default().with_bottom(Val::Px(150.0));
+    let mut padding = UiRect::default();
     match align {
         AlignItems::FlexStart => {
-            margin.left = MARGIN;
+            padding.left = MARGIN;
         }
         AlignItems::FlexEnd => {
-            margin.right = MARGIN;
+            padding.right = MARGIN;
         }
         _ => {}
     };
     (
         Name::new(name),
+        Sidebar,
         Node {
             width: Percent(50.0),
-            height: Px(1080.0),
+            height: Px(920.0),
             align_items: align,
-            justify_content: JustifyContent::FlexEnd,
+            justify_content: justify,
             flex_direction: FlexDirection::Column,
             row_gap: Px(8.0),
-            margin,
+            padding,
             ..default()
         },
         // Don't block picking events for other UI roots.
@@ -288,5 +298,92 @@ pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
         },
         // Don't block picking events for other UI roots.
         Pickable::IGNORE,
+    )
+}
+
+#[derive(Event)]
+pub struct ColorPickerEvent {
+    pub color: Color,
+}
+pub fn color_picker(tile: Option<Tile>, image: Handle<Image>) -> impl Bundle {
+    let mut offset = Vec2::ZERO;
+    if let Some(tile) = tile {
+        offset.x = tile as u8 as f32;
+    } else {
+        offset.x = Tile::all().len() as f32;
+        offset.y = 1.0;
+    }
+    (
+        Name::new("Color Picker"),
+        Node::default(),
+        Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Picker Inner"),
+                    Button,
+                    BackgroundColor(BUTTON_TEXT_ALT),
+                    InteractionPalette {
+                        none: BUTTON_TEXT_ALT,
+                        hovered: BUTTON_BACKGROUND,
+                        pressed: BUTTON_BACKGROUND,
+                    },
+                    children![(
+                        Name::new("Picker Color"),
+                        Node {
+                            width: Val::Px(50.0),
+                            height: Val::Px(50.0),
+                            ..default()
+                        },
+                        ImageNode {
+                            image: image,
+                            image_mode: NodeImageMode::Auto,
+                            rect: Some(Rect::new(
+                                512.0 * offset.x,
+                                512.0 * offset.y,
+                                512.0 * (offset.x + 1.0),
+                                512.0 * (offset.y + 1.0)
+                            )),
+                            ..default()
+                        },
+                        // Don't bubble picking events from the text up to the button.
+                        Pickable::IGNORE,
+                    )],
+                ))
+                .insert((
+                    Node {
+                        width: Px(60.0),
+                        height: Px(60.0),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    BorderRadius::all(Val::Px(10.0)),
+                ));
+        })),
+    )
+}
+pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
+    (
+        Name::new("Rule UI"),
+        Node {
+            position_type: PositionType::Relative,
+            width: Percent(100.0),
+            height: Percent(8.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::FlexEnd,
+            flex_direction: FlexDirection::Row,
+            column_gap: Px(8.0),
+            padding: UiRect::default().with_right(Val::Percent(5.0)),
+            ..default()
+        },
+        // Don't block picking events for other UI roots.
+        Pickable::IGNORE,
+        children![
+            color_picker(Some(tile), image.clone()),
+            color_picker(rule.tiles[0], image.clone()),
+            color_picker(rule.tiles[1], image.clone()),
+            Text::new("→"),
+            color_picker(rule.result, image.clone()),
+        ],
     )
 }
