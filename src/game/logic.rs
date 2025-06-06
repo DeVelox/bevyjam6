@@ -134,6 +134,7 @@ fn rendering_step(
                     ChildOf(entity),
                     AnimationConfig::new(12, 16, 15),
                     StateScoped(IterationState::Displaying),
+                    Transform::from_xyz(0.0, 0.0, 0.2),
                     Sprite {
                         image: image.clone(),
                         color: tile.color(),

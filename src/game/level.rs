@@ -145,7 +145,7 @@ impl Utility for Grid {
                 Puzzle,
                 ChildOf(parent),
                 Transform::from_translation(coords.extend(0.0)),
-                children![Face::Thinking],
+                children![(Face::Thinking, Transform::from_xyz(0.0, 0.0, 0.1))],
                 #[cfg(feature = "dev")]
                 Pickable::default(),
                 #[cfg(feature = "dev")]
