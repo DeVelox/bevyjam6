@@ -2,7 +2,12 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*, ui::Val::*};
 
-use crate::{Pause, game::level::spawn_level, menus::Menu, screens::Screen};
+use crate::{
+    Pause,
+    game::{level::spawn_level, logic::Victory},
+    menus::Menu,
+    screens::Screen,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_level);
@@ -15,6 +20,11 @@ pub(super) fn plugin(app: &mut App) {
                 in_state(Screen::Gameplay)
                     .and(in_state(Menu::None))
                     .and(input_just_pressed(KeyCode::KeyP).or(input_just_pressed(KeyCode::Escape))),
+            ),
+            (pause, spawn_pause_overlay, open_victory_menu).run_if(
+                in_state(Screen::Gameplay)
+                    .and(in_state(Menu::None))
+                    .and(resource_added::<Victory>),
             ),
             close_menu.run_if(
                 in_state(Screen::Gameplay)
@@ -47,13 +57,17 @@ fn spawn_pause_overlay(mut commands: Commands) {
             ..default()
         },
         GlobalZIndex(1),
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+        BackgroundColor(Color::srgba(0.063, 0.071, 0.110, 0.95)),
         StateScoped(Pause(true)),
     ));
 }
 
 fn open_pause_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Pause);
+}
+
+fn open_victory_menu(mut next_menu: ResMut<NextState<Menu>>) {
+    next_menu.set(Menu::Victory);
 }
 
 fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {

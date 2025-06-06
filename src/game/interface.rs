@@ -6,13 +6,16 @@ use crate::{
     dev_tools::print_level,
     menus::Menu,
     screens::Screen,
-    theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonSize},
+    theme::{
+        prelude::InteractionPalette,
+        widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonColors, ButtonSize},
+    },
 };
 
 use super::{
     level::{Level, LevelAssets, Switch},
     logic::{
-        AutomaticSimulation, DisableControls, Rule, reset_simulation, step_simulation,
+        AutomaticSimulation, DisableControls, Rule, Victory, reset_simulation, step_simulation,
         toggle_simulation,
     },
 };
@@ -32,7 +35,14 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             spawn_rules_ui.run_if(resource_changed::<PlayerRules>),
-            update_button_text,
+            update_button_text.run_if(
+                resource_added::<AutomaticSimulation>
+                    .or(resource_added::<DisableControls>)
+                    .or(resource_added::<Victory>)
+                    .or(resource_removed::<AutomaticSimulation>)
+                    .or(resource_removed::<DisableControls>)
+                    .or(resource_removed::<Victory>),
+            ),
             (
                 handle_mask_buttons,
                 handle_invert_buttons,
@@ -144,15 +154,12 @@ fn spawn_simulation_ui(mut commands: Commands) {
                                         None,
                                         Some(BUTTON_SIZE_ALT)
                                     ),
-                                    (
-                                        widget::button_custom(
-                                            "",
-                                            go_next_level,
-                                            None,
-                                            Some(BUTTON_SIZE_ALT)
-                                        ),
-                                        NextLevel,
-                                    ),
+                                    (widget::button_custom(
+                                        "",
+                                        go_next_level,
+                                        None,
+                                        Some(BUTTON_SIZE_ALT)
+                                    ),),
                                 ],
                             ),
                         ],
@@ -174,11 +181,13 @@ pub fn go_next_level(
 }
 
 pub fn update_button_text(
+    mut commands: Commands,
     auto: Option<Res<AutomaticSimulation>>,
     locked: Option<Res<DisableControls>>,
-    mut text: Query<(&Name, &mut Text)>,
+    victory: Option<Res<Victory>>,
+    mut text: Query<(Entity, &Name, &ChildOf, &mut Text)>,
 ) {
-    for (name, mut text) in &mut text {
+    for (entity, name, parent, mut text) in &mut text {
         if auto.is_some() && text.0 == "" {
             text.0 = "".to_string();
         } else if auto.is_none() && text.0 == "" {
@@ -193,6 +202,30 @@ pub fn update_button_text(
             text.0 = icons[1].to_string();
         } else if locked.is_none() && text.0 == icons[1] {
             text.0 = icons[0].to_string();
+        }
+        if victory.is_some() && text.0 == "" {
+            commands
+                .entity(entity)
+                .insert(TextColor(BUTTON_COLORS_ALT.text));
+            commands.entity(parent.0).insert((
+                BackgroundColor(BUTTON_COLORS_ALT.background),
+                InteractionPalette {
+                    none: BUTTON_COLORS_ALT.background,
+                    hovered: BUTTON_COLORS_ALT.hovered,
+                    pressed: BUTTON_COLORS_ALT.pressed,
+                },
+            ));
+        } else if victory.is_none() && text.0 == "" {
+            let colors = ButtonColors::default();
+            commands.entity(entity).insert(TextColor(colors.text));
+            commands.entity(parent.0).insert((
+                BackgroundColor(colors.background),
+                InteractionPalette {
+                    none: colors.background,
+                    hovered: colors.hovered,
+                    pressed: colors.pressed,
+                },
+            ));
         }
     }
 }
@@ -223,8 +256,6 @@ fn change_font(
 
 #[derive(Component)]
 pub struct RulesWidget;
-#[derive(Component)]
-pub struct NextLevel;
 #[derive(Component)]
 pub struct LockReset;
 

@@ -4,14 +4,9 @@ use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::
 
 use super::{
     animation::AnimationConfig,
-    interface::NextLevel,
     level::{Face, Grid, LevelAssets, PADDING, Puzzle, Tile, Utility},
 };
-use crate::{
-    menus::Menu,
-    screens::Screen,
-    theme::{prelude::InteractionPalette, widget::BUTTON_COLORS_ALT},
-};
+use crate::{menus::Menu, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<PlayerRules>();
@@ -180,26 +175,10 @@ fn check_faces(
         });
     }
 }
-fn check_wincon(
-    mut commands: Commands,
-    grid: Res<GridIterations>,
-    button: Single<(Entity, &ChildOf), With<NextLevel>>,
-) {
+fn check_wincon(mut commands: Commands, grid: Res<GridIterations>) {
     if grid.grid.last().unwrap_or(&Vec::new()) == &grid.goal {
-        let (entity, parent) = button.into_inner();
         commands.insert_resource(Victory);
         commands.remove_resource::<AutomaticSimulation>();
-        commands
-            .entity(entity)
-            .insert(TextColor(BUTTON_COLORS_ALT.text));
-        commands.entity(parent.0).insert((
-            BackgroundColor(BUTTON_COLORS_ALT.background),
-            InteractionPalette {
-                none: BUTTON_COLORS_ALT.background,
-                hovered: BUTTON_COLORS_ALT.hovered,
-                pressed: BUTTON_COLORS_ALT.pressed,
-            },
-        ));
     }
 }
 pub fn toggle_simulation(
