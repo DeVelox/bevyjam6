@@ -229,8 +229,12 @@ impl Utility for Grid {
 #[states(scoped_entities)]
 pub enum Level {
     #[default]
-    Beginner,
-    Expert,
+    Beginner1,
+    Beginner2,
+    Intermediate1,
+    Intermediate2,
+    Intermediate3,
+    Expert1,
 }
 
 pub trait Switch {
@@ -240,8 +244,12 @@ pub trait Switch {
 impl Switch for Level {
     fn next(&self) -> Self {
         match self {
-            Level::Beginner => Level::Expert,
-            Level::Expert => Level::Beginner,
+            Level::Beginner1 => Level::Beginner2,
+            Level::Beginner2 => Level::Intermediate1,
+            Level::Intermediate1 => Level::Intermediate2,
+            Level::Intermediate2 => Level::Intermediate3,
+            Level::Intermediate3 => Level::Expert1,
+            Level::Expert1 => Level::Beginner1,
         }
     }
 }
