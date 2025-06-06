@@ -3,6 +3,7 @@ use bevy::{ecs::spawn::SpawnIter, prelude::*};
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
 
 use crate::{
+    dev_tools::print_level,
     menus::Menu,
     screens::Screen,
     theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonSize},
@@ -44,13 +45,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (
-            spawn_simulation_ui,
-            spawn_rules_ui.after(spawn_level),
-            #[cfg(feature = "dev")]
-            attach_observers,
-        )
-            .chain(),
+        (spawn_simulation_ui, spawn_rules_ui.after(spawn_level)).chain(),
     );
     app.add_systems(Update, update_ui_scale);
     app.add_observer(change_font);
@@ -328,42 +323,6 @@ fn handle_reset_buttons(
             }
         }
     }
-}
-
-#[cfg(feature = "dev")]
-fn handle_debug_editor(
-    trigger: Trigger<Pointer<Click>>,
-    mut query: Query<(Entity, &mut ColorPickerButton), With<crate::game::level::Puzzle>>,
-    rules: Res<PlayerRules>,
-    mut commands: Commands,
-) {
-    let color_pool = &rules.color_pool.clone();
-    if let Ok((entity, mut button)) = query.get_mut(trigger.target()) {
-        if let Some(color) = button.change_color(color_pool) {
-            commands.entity(entity).insert(color);
-        } else {
-            commands
-                .entity(entity)
-                .insert(button.change_color(color_pool).unwrap());
-        }
-    }
-}
-#[cfg(feature = "dev")]
-fn attach_observers(
-    mut commands: Commands,
-    query: Query<Entity, With<crate::game::level::Puzzle>>,
-) {
-    for entity in &query {
-        commands.entity(entity).observe(handle_debug_editor);
-    }
-}
-#[cfg(feature = "dev")]
-fn print_level(_: Trigger<Pointer<Click>>, query: Query<&Tile, With<crate::game::level::Puzzle>>) {
-    let mut level = vec![];
-    for tile in &query {
-        level.push(*tile as u8);
-    }
-    warn!("{:?}", level);
 }
 
 // fn setup_egui(

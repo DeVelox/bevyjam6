@@ -146,14 +146,6 @@ impl Utility for Grid {
                 ChildOf(parent),
                 Transform::from_translation(coords.extend(0.0)),
                 children![(Face::Thinking, Transform::from_xyz(0.0, 0.0, 0.1))],
-                #[cfg(feature = "dev")]
-                Pickable::default(),
-                #[cfg(feature = "dev")]
-                crate::game::interface::ColorPickerButton {
-                    index: 99, // disabled
-                    color: Some(tile),
-                    ..default()
-                },
             ));
         }
         (tiles, tile_size)
