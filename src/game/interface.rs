@@ -5,13 +5,14 @@ use bevy::{ecs::spawn::SpawnIter, prelude::*};
 use crate::{
     menus::Menu,
     screens::Screen,
-    theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, LeftSidebar, RightSidebar},
+    theme::widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonSize},
 };
 
 use super::{
     level::{Level, LevelAssets, Switch},
     logic::{
-        AutomaticSimulation, DisableControls, reset_simulation, step_simulation, toggle_simulation,
+        AutomaticSimulation, DisableControls, Rule, reset_simulation, step_simulation,
+        toggle_simulation,
     },
 };
 use super::{
@@ -34,6 +35,7 @@ pub(super) fn plugin(app: &mut App) {
             (
                 handle_mask_buttons,
                 handle_invert_buttons,
+                handle_reset_buttons,
                 handle_color_pickers,
             )
                 .run_if(not(resource_exists::<DisableControls>)),
@@ -56,7 +58,7 @@ pub(super) fn plugin(app: &mut App) {
 
 fn spawn_rules_ui(
     mut commands: Commands,
-    sidebar: Single<(Entity, Option<&Children>), With<LeftSidebar>>,
+    sidebar: Single<(Entity, Option<&Children>), With<RulesWidget>>,
     level_assets: Res<LevelAssets>,
     player_input: Res<PlayerRules>,
 ) {
@@ -82,65 +84,90 @@ fn spawn_simulation_ui(mut commands: Commands) {
         GlobalZIndex(1),
         StateScoped(Screen::Gameplay),
         children![
-            (widget::ui_split(
-                "Left Sidebar",
-                AlignItems::FlexEnd,
-                JustifyContent::Center,
-                LeftSidebar
-            ),),
             (
-                widget::ui_split(
-                    "Right Sidebar",
-                    AlignItems::FlexStart,
-                    JustifyContent::FlexEnd,
-                    RightSidebar
-                ),
+                widget::ui_split("Left Sidebar", AlignItems::FlexEnd, JustifyContent::Center,),
                 children![
                     (
-                        #[cfg(feature = "dev")]
-                        widget::button("Print", print_level),
-                    ),
-                    (
-                        widget::button("Skip Level", go_next_level),
-                        // Visibility::Hidden,
-                        NextLevel,
-                    ),
-                    widget::button_custom(
-                        "Simulate",
-                        toggle_simulation,
-                        Some(BUTTON_COLORS_ALT),
-                        None
+                        Node {
+                            height: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            justify_content: JustifyContent::Center,
+                            row_gap: Px(15.0),
+                            ..default()
+                        },
+                        RulesWidget
                     ),
                     (
                         Node {
-                            display: Display::Grid,
+                            flex_direction: FlexDirection::Column,
+                            width: Val::Px(410.0),
                             row_gap: Px(8.0),
-                            column_gap: Px(8.0),
-                            grid_template_columns: RepeatedGridTrack::px(2, BUTTON_SIZE_ALT.width),
                             ..default()
                         },
                         children![
-                            widget::button_custom(
-                                "Reset",
-                                reset_simulation,
-                                None,
-                                Some(BUTTON_SIZE_ALT)
+                            (
+                                #[cfg(feature = "dev")]
+                                widget::button_custom(
+                                    "󰉉",
+                                    print_level,
+                                    None,
+                                    Some(ButtonSize {
+                                        width: 382.0,
+                                        height: BUTTON_SIZE_ALT.height
+                                    })
+                                ),
                             ),
-                            widget::button_custom(
-                                "Step",
-                                step_simulation,
-                                None,
-                                Some(BUTTON_SIZE_ALT)
+                            (
+                                Node {
+                                    display: Display::Flex,
+                                    flex_direction: FlexDirection::Row,
+                                    column_gap: Px(8.0),
+                                    ..default()
+                                },
+                                children![
+                                    widget::button_custom(
+                                        "",
+                                        toggle_simulation,
+                                        Some(BUTTON_COLORS_ALT),
+                                        Some(ButtonSize {
+                                            width: 120.0,
+                                            height: BUTTON_SIZE_ALT.height
+                                        })
+                                    ),
+                                    (
+                                        widget::button_custom(
+                                            "󰑙",
+                                            reset_simulation,
+                                            None,
+                                            Some(BUTTON_SIZE_ALT)
+                                        ),
+                                        LockReset
+                                    ),
+                                    widget::button_custom(
+                                        "",
+                                        step_simulation,
+                                        None,
+                                        Some(BUTTON_SIZE_ALT)
+                                    ),
+                                    (
+                                        widget::button_custom(
+                                            "",
+                                            go_next_level,
+                                            None,
+                                            Some(BUTTON_SIZE_ALT)
+                                        ),
+                                        NextLevel,
+                                    ),
+                                ],
                             ),
                         ],
                     ),
                 ],
             ),
+            widget::ui_split("Right Sidebar", AlignItems::Center, JustifyContent::Center,),
         ],
     ));
 }
-#[derive(Component)]
-pub struct NextLevel;
 pub fn go_next_level(
     _: Trigger<Pointer<Click>>,
     current_level: Res<State<Level>>,
@@ -151,18 +178,26 @@ pub fn go_next_level(
     screen.set(Screen::Loading);
 }
 
-pub fn update_button_text(auto: Option<Res<AutomaticSimulation>>, mut text: Query<&mut Text>) {
-    if auto.is_some() {
-        for mut text in &mut text {
-            if text.0 == "Simulate" {
-                text.0 = "Pause".to_string();
-            }
+pub fn update_button_text(
+    auto: Option<Res<AutomaticSimulation>>,
+    locked: Option<Res<DisableControls>>,
+    mut text: Query<(&Name, &mut Text)>,
+) {
+    for (name, mut text) in &mut text {
+        if auto.is_some() && text.0 == "" {
+            text.0 = "".to_string();
+        } else if auto.is_none() && text.0 == "" {
+            text.0 = "".to_string();
         }
-    } else {
-        for mut text in &mut text {
-            if text.0 == "Pause" {
-                text.0 = "Simulate".to_string();
-            }
+        let icons = if name.as_str() == "Rule Reset" {
+            ["󰑙", "󰌾"]
+        } else {
+            ["󰑙", "󰝳"]
+        };
+        if locked.is_some() && text.0 == icons[0] {
+            text.0 = icons[1].to_string();
+        } else if locked.is_none() && text.0 == icons[1] {
+            text.0 = icons[0].to_string();
         }
     }
 }
@@ -192,6 +227,13 @@ fn change_font(
 }
 
 #[derive(Component)]
+pub struct RulesWidget;
+#[derive(Component)]
+pub struct NextLevel;
+#[derive(Component)]
+pub struct LockReset;
+
+#[derive(Component)]
 pub struct MaskToggleButton {
     pub tile: Tile,
     pub index: usize,
@@ -199,6 +241,11 @@ pub struct MaskToggleButton {
 
 #[derive(Component)]
 pub struct InvertToggleButton {
+    pub tile: Tile,
+}
+
+#[derive(Component)]
+pub struct ResetRuleButton {
     pub tile: Tile,
 }
 
@@ -265,6 +312,19 @@ fn handle_invert_buttons(
         if *interaction == Interaction::Pressed {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
                 rule.invert = !rule.invert;
+            }
+        }
+    }
+}
+
+fn handle_reset_buttons(
+    interaction_query: Query<(&Interaction, &ResetRuleButton), Changed<Interaction>>,
+    mut rules: ResMut<PlayerRules>,
+) {
+    for (interaction, button) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Some(rule) = rules.rules.get_mut(&button.tile) {
+                *rule = Rule::default();
             }
         }
     }

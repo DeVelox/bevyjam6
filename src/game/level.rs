@@ -46,7 +46,7 @@ impl FromWorld for LevelAssets {
         let assets = world.resource::<AssetServer>();
         Self {
             atlas,
-            font: assets.load("fonts/SpaceMono-Regular.ttf"),
+            font: assets.load("fonts/JetBrainsMonoNerdFontPropo-Regular.ttf"),
             music: assets.load("audio/music/Fluffing A Duck.ogg"),
             puzzles: assets.load("levels/puzzles.ron"),
             solutions: assets.load("levels/solutions.ron"),
@@ -123,7 +123,7 @@ pub trait Utility {
     fn check_neighbours(&self, index: usize, input: &PlayerRules) -> Option<Tile>;
 }
 const TILE_SIZE: f32 = 120.;
-const MINI_SCALE: f32 = 3.;
+const MINI_SCALE: f32 = 2.5;
 pub const PADDING: f32 = 8.;
 impl Utility for Grid {
     fn render_puzzle(&self, parent: Entity) -> (Vec<impl Bundle>, f32) {
@@ -177,7 +177,7 @@ impl Utility for Grid {
                 Solution,
                 ChildOf(parent),
                 Transform::from_translation(
-                    (TILE_SIZE * Vec2::new(35., 15.) / MINI_SCALE + coords).extend(0.0),
+                    (TILE_SIZE * Vec2::new(30., 10.) / MINI_SCALE + coords).extend(0.0),
                 ),
                 Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING / MINI_SCALE)),
             ));

@@ -10,7 +10,7 @@ use bevy::{
 
 use crate::{
     game::{
-        interface::{ColorPickerButton, InvertToggleButton, MaskToggleButton},
+        interface::{ColorPickerButton, InvertToggleButton, MaskToggleButton, ResetRuleButton},
         level::Tile,
         logic::Rule,
     },
@@ -249,22 +249,16 @@ pub const BUTTON_COLORS_ALT: ButtonColors = ButtonColors {
     background: BUTTON_BACKGROUND_ALT,
 };
 pub const BUTTON_SIZE_ALT: ButtonSize = ButtonSize {
-    width: 146.0,
+    width: 80.0,
     height: 60.0,
 };
-
-#[derive(Component)]
-pub struct LeftSidebar;
-#[derive(Component)]
-pub struct RightSidebar;
 
 pub fn ui_split(
     name: impl Into<Cow<'static, str>>,
     align: AlignItems,
     justify: JustifyContent,
-    tag: impl Bundle,
 ) -> impl Bundle {
-    const MARGIN: Val = Val::Px(550.0);
+    const MARGIN: Val = Val::Px(500.0);
     let mut padding = UiRect::default();
     match align {
         AlignItems::FlexStart => {
@@ -277,7 +271,6 @@ pub fn ui_split(
     };
     (
         Name::new(name),
-        tag,
         Node {
             width: Percent(50.0),
             height: Px(920.0),
@@ -302,7 +295,6 @@ pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Row,
-            row_gap: Px(8.0),
             ..default()
         },
         // Don't block picking events for other UI roots.
@@ -465,7 +457,7 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
             justify_content: JustifyContent::FlexEnd,
             flex_direction: FlexDirection::Row,
             column_gap: Px(8.0),
-            padding: UiRect::default().with_right(Val::Percent(5.0)),
+            padding: UiRect::default().with_right(Val::Px(0.0)),
             ..default()
         },
         // Don't block picking events for other UI roots.
@@ -483,8 +475,8 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
             (
                 Node {
                     display: Display::Grid,
-                    row_gap: Px(6.0),
-                    column_gap: Px(6.0),
+                    row_gap: Px(5.0),
+                    column_gap: Px(5.0),
                     grid_template_columns: RepeatedGridTrack::px(3, 16.0),
                     ..default()
                 },
@@ -528,7 +520,7 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                 }
             ),
             (
-                Text::new("→"),
+                Text::new(""),
                 TextColor(DISABLED),
                 TextFont::from_font_size(24.0),
             ),
@@ -541,6 +533,23 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     index: 2,
                     color: rule.result
                 }
+            ),
+            (
+                Button,
+                ResetRuleButton { tile },
+                Node {
+                    width: Val::Px(30.0),
+                    height: Val::Px(30.0),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                children![(
+                    Name::new("Rule Reset"),
+                    Text::new("󰑙"),
+                    TextColor(DISABLED),
+                    TextFont::from_font_size(32.0),
+                )]
             ),
         ],
     )

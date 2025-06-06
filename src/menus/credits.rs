@@ -26,6 +26,7 @@ fn spawn_credits_menu(mut commands: Commands) {
         children![
             widget::header("Created by"),
             created_by(),
+            widget::header(" "), // just a gap
             widget::header("Assets"),
             assets(),
             widget::header(" "), // just a gap
@@ -36,7 +37,7 @@ fn spawn_credits_menu(mut commands: Commands) {
 
 fn created_by() -> impl Bundle {
     grid(vec![
-        ["DeVelox", "Wrote all the code"],
+        ["DeVelox", "Code all the things"],
         ["MrRgon", "Made all the puzzles"],
         ["EjayFreeKay", "Drew all the art"],
     ])
@@ -46,7 +47,7 @@ fn assets() -> impl Bundle {
     grid(vec![
         ["Button SFX", "CC0 by Jaszunio15"],
         ["Music", "CC BY 3.0 by Kevin MacLeod"],
-        ["Space Mono font", "OFL v1.1 by Colophon"],
+        ["JetBrains Mono font", "OFL v1.1 by Jetbrains"],
         [
             "Bevy logo",
             "All rights reserved by the Bevy Foundation, permission granted for splash screen use when unmodified",

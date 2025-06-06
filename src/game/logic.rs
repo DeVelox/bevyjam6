@@ -7,7 +7,11 @@ use super::{
     interface::NextLevel,
     level::{Face, Grid, LevelAssets, PADDING, Puzzle, Tile, Utility},
 };
-use crate::{menus::Menu, screens::Screen};
+use crate::{
+    menus::Menu,
+    screens::Screen,
+    theme::{prelude::InteractionPalette, widget::BUTTON_COLORS_ALT},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<PlayerRules>();
@@ -179,15 +183,23 @@ fn check_faces(
 fn check_wincon(
     mut commands: Commands,
     grid: Res<GridIterations>,
-    button: Single<Entity, With<NextLevel>>,
+    button: Single<(Entity, &ChildOf), With<NextLevel>>,
 ) {
     if grid.grid.last().unwrap_or(&Vec::new()) == &grid.goal {
+        let (entity, parent) = button.into_inner();
         commands.insert_resource(Victory);
         commands.remove_resource::<AutomaticSimulation>();
         commands
-            .entity(button.into_inner())
-            .insert(Name::new("Next level"));
-        // .insert(Visibility::Visible);
+            .entity(entity)
+            .insert(TextColor(BUTTON_COLORS_ALT.text));
+        commands.entity(parent.0).insert((
+            BackgroundColor(BUTTON_COLORS_ALT.background),
+            InteractionPalette {
+                none: BUTTON_COLORS_ALT.background,
+                hovered: BUTTON_COLORS_ALT.hovered,
+                pressed: BUTTON_COLORS_ALT.pressed,
+            },
+        ));
     }
 }
 pub fn toggle_simulation(
