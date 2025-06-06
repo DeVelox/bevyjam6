@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    level::{Level, LevelAssets, Puzzle, Switch},
+    level::{Level, LevelAssets, Switch},
     logic::{
         AutomaticSimulation, DisableControls, reset_simulation, step_simulation, toggle_simulation,
     },
@@ -42,7 +42,13 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (spawn_simulation_ui, spawn_rules_ui.after(spawn_level)).chain(),
+        (
+            spawn_simulation_ui,
+            spawn_rules_ui.after(spawn_level),
+            #[cfg(feature = "dev")]
+            attach_observers,
+        )
+            .chain(),
     );
     app.add_systems(Update, update_ui_scale);
     app.add_observer(change_font);
@@ -90,8 +96,10 @@ fn spawn_simulation_ui(mut commands: Commands) {
                     RightSidebar
                 ),
                 children![
-                    #[cfg(feature = "dev")]
-                    (widget::button("Print", print_level),),
+                    (
+                        #[cfg(feature = "dev")]
+                        widget::button("Print", print_level),
+                    ),
                     (
                         widget::button("Next Level", go_next_level),
                         Visibility::Hidden,
@@ -226,9 +234,9 @@ fn handle_color_pickers(
         if *interaction == Interaction::Pressed {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
                 match button.index {
-                    0 => rule.tiles[0] = button.change_color(color_pool),
-                    1 => rule.tiles[1] = button.change_color(color_pool),
-                    2 => rule.result = button.change_color(color_pool),
+                    0 => rule.tiles[0] = button.change_color(&color_pool),
+                    1 => rule.tiles[1] = button.change_color(&color_pool),
+                    2 => rule.result = button.change_color(&color_pool),
                     _ => {}
                 };
             }
@@ -261,7 +269,36 @@ fn handle_invert_buttons(
         }
     }
 }
-fn print_level(_: Trigger<Pointer<Click>>, query: Query<&Tile, With<Puzzle>>) {
+
+#[cfg(feature = "dev")]
+fn handle_debug_editor(
+    trigger: Trigger<Pointer<Click>>,
+    mut query: Query<(Entity, &mut ColorPickerButton), With<crate::game::level::Puzzle>>,
+    rules: Res<PlayerRules>,
+    mut commands: Commands,
+) {
+    let color_pool = &rules.color_pool.clone();
+    if let Ok((entity, mut button)) = query.get_mut(trigger.target()) {
+        if let Some(color) = button.change_color(&color_pool) {
+            commands.entity(entity).insert(color);
+        } else {
+            commands
+                .entity(entity)
+                .insert(button.change_color(&color_pool).unwrap());
+        }
+    }
+}
+#[cfg(feature = "dev")]
+fn attach_observers(
+    mut commands: Commands,
+    query: Query<Entity, With<crate::game::level::Puzzle>>,
+) {
+    for entity in &query {
+        commands.entity(entity).observe(handle_debug_editor);
+    }
+}
+#[cfg(feature = "dev")]
+fn print_level(_: Trigger<Pointer<Click>>, query: Query<&Tile, With<crate::game::level::Puzzle>>) {
     let mut level = vec![];
     for tile in &query {
         level.push(*tile as u8);

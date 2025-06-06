@@ -11,26 +11,6 @@ use crate::{menus::Menu, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<PlayerRules>();
-    // app.insert_resource(PlayerRules {
-    //     rules: HashMap::from([
-    //         (
-    //             Tile::Red,
-    //             Rule {
-    //                 tiles: vec![Tile::Red],
-    //                 mask: [false, false, true, false, true, false, false, true],
-    //                 result: Tile::Green,
-    //             },
-    //         ),
-    //         (
-    //             Tile::Green,
-    //             Rule {
-    //                 tiles: vec![Tile::Green],
-    //                 mask: [false, false, true, false, true, false, false, true],
-    //                 result: Tile::Red,
-    //             },
-    //         ),
-    //     ]),
-    // });
     app.init_state::<IterationState>();
     app.init_resource::<GridIterations>();
     app.add_systems(

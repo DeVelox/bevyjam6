@@ -7,9 +7,8 @@ use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
 
-use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
-
 use super::logic::{GridIterations, IterationState, PlayerRules, Rule};
+use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();
@@ -147,6 +146,14 @@ impl Utility for Grid {
                 ChildOf(parent),
                 Transform::from_translation(coords.extend(0.0)),
                 children![Face::Thinking],
+                #[cfg(feature = "dev")]
+                Pickable::default(),
+                #[cfg(feature = "dev")]
+                crate::game::interface::ColorPickerButton {
+                    index: 99, // disabled
+                    color: Some(tile),
+                    ..default()
+                },
             ));
         }
         (tiles, tile_size)
