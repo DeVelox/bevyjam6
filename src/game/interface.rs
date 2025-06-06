@@ -281,9 +281,9 @@ fn handle_color_pickers(
         if *interaction == Interaction::Pressed {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
                 match button.index {
-                    0 => rule.tiles[0] = button.change_color(&color_pool),
-                    1 => rule.tiles[1] = button.change_color(&color_pool),
-                    2 => rule.result = button.change_color(&color_pool),
+                    0 => rule.tiles[0] = button.change_color(color_pool),
+                    1 => rule.tiles[1] = button.change_color(color_pool),
+                    2 => rule.result = button.change_color(color_pool),
                     _ => {}
                 };
             }
@@ -339,12 +339,12 @@ fn handle_debug_editor(
 ) {
     let color_pool = &rules.color_pool.clone();
     if let Ok((entity, mut button)) = query.get_mut(trigger.target()) {
-        if let Some(color) = button.change_color(&color_pool) {
+        if let Some(color) = button.change_color(color_pool) {
             commands.entity(entity).insert(color);
         } else {
             commands
                 .entity(entity)
-                .insert(button.change_color(&color_pool).unwrap());
+                .insert(button.change_color(color_pool).unwrap());
         }
     }
 }
