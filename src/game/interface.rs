@@ -101,8 +101,8 @@ fn spawn_simulation_ui(mut commands: Commands) {
                         widget::button("Print", print_level),
                     ),
                     (
-                        widget::button("Next Level", go_next_level),
-                        Visibility::Hidden,
+                        widget::button("Skip Level", go_next_level),
+                        // Visibility::Hidden,
                         NextLevel,
                     ),
                     widget::button_custom(

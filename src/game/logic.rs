@@ -186,7 +186,8 @@ fn check_wincon(
         commands.remove_resource::<AutomaticSimulation>();
         commands
             .entity(button.into_inner())
-            .insert(Visibility::Visible);
+            .insert(Name::new("Next level"));
+        // .insert(Visibility::Visible);
     }
 }
 pub fn toggle_simulation(
