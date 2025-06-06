@@ -1,9 +1,9 @@
 use Val::Px;
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
-
+#[cfg(feature = "dev")]
+use crate::dev_tools::print_level;
 use crate::{
-    dev_tools::print_level,
     menus::Menu,
     screens::Screen,
     theme::{
