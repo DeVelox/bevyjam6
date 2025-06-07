@@ -15,7 +15,7 @@ use crate::{
 use super::{
     level::{Level, LevelAssets, Switch},
     logic::{
-        AutomaticSimulation, DisableControls, Rule, Victory, reset_simulation, step_simulation,
+        AutomaticSimulation, DisableControls, Rule, Victory, reset_simulation, step_through,
         toggle_simulation,
     },
 };
@@ -155,7 +155,7 @@ fn spawn_simulation_ui(mut commands: Commands) {
                                     ),
                                     widget::button_custom(
                                         "",
-                                        step_simulation,
+                                        step_through,
                                         None,
                                         Some(BUTTON_SIZE_ALT)
                                     ),

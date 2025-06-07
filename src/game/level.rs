@@ -55,10 +55,12 @@ impl FromWorld for LevelAssets {
         }
     }
 }
+#[derive(Resource)]
+pub struct LevelEntity(pub Entity);
 /// A system that spawns the main level.
 pub fn spawn_level(
     mut commands: Commands,
-    mut level_assets: ResMut<LevelAssets>,
+    level_assets: Res<LevelAssets>,
     levels: Res<Assets<Levels>>,
     current_level: Res<State<Level>>,
     mut grid_iter: ResMut<GridIterations>,
@@ -76,26 +78,24 @@ pub fn spawn_level(
             )],
         ))
         .id();
+    commands.insert_resource(LevelEntity(parent));
+
     let mut color_pool: Grid = default();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let grid = &level.levels[*current_level.get() as usize];
         color_pool.extend(grid);
         grid_iter.grid.clear();
         grid_iter.grid.push((*grid).to_vec());
-        let (puzzle, tile_size) = grid.render_puzzle(parent);
-        level_assets.tile_size = tile_size;
-        for bundle in puzzle {
-            commands.spawn(bundle);
-        }
     }
+
     if let Some(solution) = levels.get(level_assets.solutions.id()) {
         let grid = &solution.levels[*current_level.get() as usize];
         color_pool.extend(grid);
         grid_iter.goal = (*grid).to_vec();
         commands.spawn_batch(grid.render_solution(parent));
     }
+
     let mut rules = PlayerRules::default();
-    // Just an example rule preset, will init with Rule::default()
     for tile in color_pool {
         let tile = Tile::from_u8(tile);
         rules.rules.entry(tile).or_insert(Rule::default());
@@ -145,7 +145,6 @@ impl Utility for Grid {
                 Puzzle,
                 ChildOf(parent),
                 Transform::from_translation(coords.extend(0.0)),
-                children![(Face::Thinking, Transform::from_xyz(0.0, 0.0, 0.1))],
             ));
         }
         (tiles, tile_size)

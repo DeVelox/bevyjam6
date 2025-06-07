@@ -4,7 +4,7 @@ use bevy::{platform::collections::HashMap, prelude::*, time::common_conditions::
 
 use super::{
     animation::AnimationConfig,
-    level::{Face, Grid, LevelAssets, PADDING, Puzzle, Tile, Utility},
+    level::{Face, Grid, LevelAssets, LevelEntity, PADDING, Puzzle, Tile, Utility},
 };
 use crate::{menus::Menu, screens::Screen, theme::shader::CustomMaterial};
 
@@ -12,16 +12,19 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<PlayerRules>();
     app.init_state::<IterationState>();
     app.init_resource::<GridIterations>();
+    app.add_systems(OnEnter(IterationState::Reset), reset_step);
+    app.add_systems(
+        OnEnter(IterationState::Displaying),
+        (clear_board, rendering_step).chain(),
+    );
+    app.add_systems(
+        OnExit(IterationState::Displaying),
+        (rendering_step, check_wincon).chain(),
+    );
     app.add_systems(
         OnEnter(IterationState::Simulating),
         simulation_step.run_if(not(resource_exists::<Victory>)),
     );
-    app.add_systems(OnEnter(IterationState::Displaying), rendering_step);
-    app.add_systems(
-        OnExit(IterationState::Displaying),
-        (rendering_step, check_faces, check_wincon).chain(),
-    );
-    app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
         Update,
         simulation_system.run_if(
@@ -33,17 +36,27 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Debug)]
 pub struct PlayerRules {
     pub rules: HashMap<Tile, Rule>,
     pub color_pool: Vec<Option<Tile>>,
 }
-#[derive(Clone, Default)]
+#[derive(Clone, Debug)]
 pub struct Rule {
     pub tiles: [Option<Tile>; 2],
     pub invert: bool,
     pub mask: [bool; 8],
     pub result: Option<Tile>,
+}
+impl Default for Rule {
+    fn default() -> Self {
+        Self {
+            tiles: [None, None],
+            invert: false,
+            mask: [true; 8],
+            result: None,
+        }
+    }
 }
 #[derive(Resource)]
 pub struct GridIterations {
@@ -64,11 +77,6 @@ impl GridIterations {
     pub fn is_correct(&self, index: usize) -> bool {
         self.grid.last().unwrap()[index] == self.goal[index]
     }
-    pub fn changed(&self, index: usize) -> bool {
-        let current = self.grid.last().unwrap();
-        let previous = self.grid.get(self.grid.len().saturating_sub(2)).unwrap();
-        current[index] != previous[index]
-    }
 }
 #[derive(Resource)]
 pub struct Victory;
@@ -87,7 +95,7 @@ fn simulation_system(
     state.set(IterationState::Simulating);
     commands.insert_resource(DisableControls);
 }
-pub fn step_simulation(
+pub fn step_through(
     _: Trigger<Pointer<Click>>,
     mut state: ResMut<NextState<IterationState>>,
     mut commands: Commands,
@@ -116,45 +124,58 @@ fn simulation_step(
     grid.grid.push(new_grid);
     state.set(IterationState::Displaying);
 }
+fn clear_board(mut commands: Commands, board: Query<Entity, With<Puzzle>>) {
+    for entity in &board {
+        commands.entity(entity).despawn();
+    }
+}
 fn rendering_step(
     mut commands: Commands,
-    level_assets: Res<LevelAssets>,
+    mut level_assets: ResMut<LevelAssets>,
+    level_entity: Res<LevelEntity>,
     grid: Res<GridIterations>,
-    board: Query<Entity, With<Puzzle>>,
     state: Res<State<IterationState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CustomMaterial>>,
 ) {
-    let reset = grid.grid.len() == 1;
-    let mut tiles: Vec<Entity> = board.iter().collect();
-    tiles.sort_by(|a, b| {
-        a.index()
-            .partial_cmp(&b.index())
-            .unwrap_or(std::cmp::Ordering::Equal)
-    });
-    for (i, entity) in tiles.iter().enumerate() {
-        let tile = Tile::from_u8(grid.grid.last().unwrap()[i]);
-        let previous = Tile::from_u8(grid.grid.get(grid.grid.len().saturating_sub(2)).unwrap()[i]);
-        let material = CustomMaterial {
+    let current = grid.grid.last().unwrap();
+    let previous = grid.grid.get(grid.grid.len().saturating_sub(2)).unwrap();
+
+    let (puzzle, tile_size) = current.render_puzzle(level_entity.0);
+    level_assets.tile_size = tile_size;
+
+    let mesh = meshes.add(Rectangle::default());
+
+    for (i, bundle) in puzzle.into_iter().enumerate() {
+        let tile = commands.spawn(bundle).id();
+        commands.spawn((
+            ChildOf(tile),
+            if grid.is_correct(i) {
+                Face::Happy
+            } else {
+                Face::Sad
+            },
+            Transform::from_xyz(0.0, 0.0, 0.2),
+        ));
+        let material = materials.add(CustomMaterial {
             sprite_texture: Some(level_assets.tilesheet.clone()),
-            atlas_index: previous as u32,
+            atlas_index: previous[i] as u32,
             dissolve_value: 1.0,
             burn_size: 0.2,
-            burn_color: LinearRgba::from(tile.color()),
-        };
-        if grid.changed(i) || reset {
+            burn_color: LinearRgba::from(Tile::from_u8(current[i]).color()),
+        });
+        if current[i] != previous[i] {
             if *state.get() == IterationState::Displaying {
                 commands.spawn((
-                    ChildOf(*entity),
+                    ChildOf(tile),
                     StateScoped(IterationState::Displaying),
-                    Mesh2d(meshes.add(Rectangle::default())),
-                    AnimationConfig::new(materials.add(material), 15),
+                    Mesh2d(mesh.clone()),
+                    MeshMaterial2d(material.clone()),
+                    AnimationConfig::new(material.clone(), 60),
                     Transform::default()
                         .with_scale(Vec3::splat(level_assets.tile_size - PADDING))
                         .with_translation(Vec3::new(0.0, 0.0, 0.1)),
                 ));
-            } else {
-                commands.entity(*entity).insert(tile);
             }
         }
     }
@@ -169,19 +190,6 @@ fn reset_step(
     commands.remove_resource::<DisableControls>();
     commands.remove_resource::<Victory>();
     state.set(IterationState::Displaying);
-}
-fn check_faces(
-    mut commands: Commands,
-    grid: Res<GridIterations>,
-    faces: Query<Entity, With<Face>>,
-) {
-    for (i, entity) in faces.iter().enumerate() {
-        commands.entity(entity).insert(if grid.is_correct(i) {
-            Face::Happy
-        } else {
-            Face::Sad
-        });
-    }
 }
 fn check_wincon(mut commands: Commands, grid: Res<GridIterations>) {
     if grid.grid.last().unwrap_or(&Vec::new()) == &grid.goal {

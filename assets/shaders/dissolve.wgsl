@@ -15,7 +15,7 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     let index = f32(atlas_index) / 9.0;
     let atlas_uv = vec2<f32>(
         index + mesh.uv.x * scale,
-        0.5 + mesh.uv.y * 0.5
+        0.0 + mesh.uv.y * 0.5
     );
 
     let noise: f32 = simplex_noise_2d(vec2<f32>(mesh.uv));

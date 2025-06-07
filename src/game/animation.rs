@@ -44,6 +44,7 @@ fn execute_animations(
                     state.set(IterationState::Ready);
                 } else {
                     material.dissolve_value -= 1.0 / config.fps as f32;
+                    // info!("Dissolve value: {}", material.dissolve_value);
                     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
                 }
             }
