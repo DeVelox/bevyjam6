@@ -334,9 +334,9 @@ pub fn color_picker(
         offset.y = 1.0;
     }
     let color = if is_key {
-        BUTTON_TEXT_ALT
-    } else {
         BUTTON_BACKGROUND
+    } else {
+        BUTTON_PRESSED_BACKGROUND
     };
     let background_color = if let Some(tile) = tile {
         tile.color()
@@ -352,11 +352,11 @@ pub fn color_picker(
                     Name::new("Picker Inner"),
                     Button,
                     action,
-                    BackgroundColor(BUTTON_TEXT_ALT),
+                    BackgroundColor(color),
                     InteractionPalette {
-                        none: BUTTON_TEXT_ALT,
-                        hovered: color,
-                        pressed: color,
+                        none: color,
+                        hovered: BUTTON_BACKGROUND,
+                        pressed: BUTTON_PRESSED_BACKGROUND,
                     },
                     children![(
                         Name::new("Picker Color"),
@@ -366,18 +366,6 @@ pub fn color_picker(
                             ..default()
                         },
                         BackgroundColor(background_color),
-                        // ImageNode {
-                        //     image: image,
-                        //     image_mode: NodeImageMode::Auto,
-                        //     rect: Some(Rect::new(
-                        //         512.0 * offset.x,
-                        //         512.0 * offset.y,
-                        //         512.0 * (offset.x + 1.0),
-                        //         512.0 * (offset.y + 1.0)
-                        //     )),
-                        //     ..default()
-                        // },
-                        // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,
                     )],
                 ))
@@ -478,58 +466,6 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
         Pickable::IGNORE,
         children![
             color_picker(
-                rule.tiles[0],
-                image.clone(),
-                false,
-                ColorPickerButton {
-                    tile,
-                    index: 0,
-                    color: rule.tiles[0]
-                }
-            ),
-            // color_picker(
-            //     rule.tiles[1],
-            //     image.clone(),
-            //     false,
-            //     ColorPickerButton {
-            //         tile,
-            //         index: 1,
-            //         color: rule.tiles[1]
-            //     }
-            // ),
-            (
-                Node {
-                    display: Display::Grid,
-                    margin: UiRect {
-                        left: Val::Px(16.0),
-                        right: Val::Px(16.0),
-                        ..default()
-                    },
-                    row_gap: Px(5.0),
-                    column_gap: Px(5.0),
-                    grid_template_columns: RepeatedGridTrack::px(3, 16.0),
-                    ..default()
-                },
-                Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
-                    for i in [5, 6, 7, 3, 4, 0, 1, 2] {
-                        if i == 4 {
-                            parent.spawn(direction_picker(
-                                rule.invert,
-                                rule.invert,
-                                true,
-                                InvertToggleButton { tile },
-                            ));
-                        }
-                        parent.spawn(direction_picker(
-                            rule.mask[i],
-                            rule.invert,
-                            false,
-                            MaskToggleButton { tile, index: i },
-                        ));
-                    }
-                }),),
-            ),
-            color_picker(
                 Some(tile),
                 image.clone(),
                 true,
@@ -551,6 +487,48 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     tile,
                     index: 2,
                     color: rule.result
+                }
+            ),
+            (
+                Node {
+                    display: Display::Grid,
+                    margin: UiRect {
+                        left: Val::Px(16.0),
+                        right: Val::Px(16.0),
+                        ..default()
+                    },
+                    row_gap: Px(5.0),
+                    column_gap: Px(5.0),
+                    grid_template_columns: RepeatedGridTrack::px(3, 16.0),
+                    ..default()
+                },
+                Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+                    for i in [5, 6, 7, 3, 4, 0, 1, 2] {
+                        if i == 4 {
+                            parent.spawn(direction_picker(
+                                rule.invert,
+                                false,
+                                true,
+                                InvertToggleButton { tile },
+                            ));
+                        }
+                        parent.spawn(direction_picker(
+                            rule.mask[i],
+                            rule.invert,
+                            false,
+                            MaskToggleButton { tile, index: i },
+                        ));
+                    }
+                }),),
+            ),
+            color_picker(
+                rule.tiles[0],
+                image.clone(),
+                false,
+                ColorPickerButton {
+                    tile,
+                    index: 0,
+                    color: rule.tiles[0]
                 }
             ),
             (

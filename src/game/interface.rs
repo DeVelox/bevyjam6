@@ -324,20 +324,23 @@ fn toggle_mouse_painting(
         commands.insert_resource(MousePainting);
     } else {
         commands.remove_resource::<MousePainting>();
-    }
-    for (_, rule) in &mut rules.rules {
-        rule.changed.fill(false);
+        if mouse_input.just_released(MouseButton::Left) {
+            for (_, rule) in &mut rules.rules {
+                rule.changed.fill(false);
+            }
+        }
     }
 }
 
 fn handle_mask_buttons(
     interaction_query: Query<(&Interaction, &MaskToggleButton), Changed<Interaction>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
     mut rules: ResMut<PlayerRules>,
 ) {
     for (interaction, button) in &interaction_query {
         if *interaction != Interaction::None {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
-                if !rule.changed[button.index] {
+                if !rule.changed[button.index] && mouse_input.pressed(MouseButton::Left) {
                     rule.changed[button.index] = true;
                     rule.mask[button.index] = !rule.mask[button.index];
                 }
