@@ -7,7 +7,7 @@ use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
 
-use super::logic::{GridIterations, IterationState, PlayerRules, Rule};
+use super::logic::{GridIterations, IterationState, PlayerRules};
 use crate::{asset_tracking::LoadResource, audio::music, screens::Screen, theme::palette::*};
 
 pub(super) fn plugin(app: &mut App) {
@@ -80,31 +80,17 @@ pub fn spawn_level(
         .id();
     commands.insert_resource(LevelEntity(parent));
 
-    let mut color_pool: Grid = default();
     if let Some(level) = levels.get(level_assets.puzzles.id()) {
         let grid = &level.levels[*current_level.get() as usize];
-        color_pool.extend(grid);
         grid_iter.grid.clear();
         grid_iter.grid.push((*grid).to_vec());
     }
 
     if let Some(solution) = levels.get(level_assets.solutions.id()) {
         let grid = &solution.levels[*current_level.get() as usize];
-        color_pool.extend(grid);
         grid_iter.goal = (*grid).to_vec();
         commands.spawn_batch(grid.render_solution(parent));
     }
-
-    let mut rules = PlayerRules::default();
-    for tile in color_pool {
-        let tile = Tile::from_u8(tile);
-        rules.rules.entry(tile).or_insert(Rule::default());
-        rules.color_pool.push(Some(tile));
-    }
-    rules.color_pool.sort();
-    rules.color_pool.dedup();
-    rules.color_pool.push(None);
-    commands.insert_resource(rules);
     state.set(IterationState::Reset);
 }
 

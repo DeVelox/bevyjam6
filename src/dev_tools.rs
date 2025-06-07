@@ -110,8 +110,13 @@ pub fn handle_debug_editor(
     rules: Res<PlayerRules>,
 ) {
     if trigger.event.button == PointerButton::Primary && color.0.is_none() {
-        let mut color_pool = rules.color_pool.clone();
-        color_pool.pop();
+        let color_pool: Vec<_> = rules
+            .color_pool
+            .iter()
+            .filter(|x| x.is_some())
+            .copied()
+            .collect();
+        info!("Color pool: {:?}", color_pool);
         if let Ok((entity, mut button)) = query.get_mut(trigger.target()) {
             let new_color = button.change_color(&color_pool).unwrap();
             grid_iter.grid.last_mut().unwrap()[button.index] = new_color as u8;
