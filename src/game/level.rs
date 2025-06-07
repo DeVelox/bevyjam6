@@ -156,7 +156,7 @@ impl Utility for Grid {
                 Transform::from_translation(
                     (TILE_SIZE * Vec2::new(30., 10.) / MINI_SCALE + coords).extend(0.0),
                 ),
-                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING / MINI_SCALE)),
+                Sprite::from_color(tile.color(), Vec2::splat(tile_size - PADDING)),
             ));
         }
         tiles

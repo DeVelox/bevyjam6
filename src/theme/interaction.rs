@@ -8,8 +8,9 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<InteractionAssets>();
     app.load_resource::<InteractionAssets>();
-    app.add_observer(play_on_hover_sound_effect);
-    app.add_observer(play_on_click_sound_effect);
+    app.add_systems(Update, play_sounds_for_all_clicks);
+    // app.add_observer(play_on_hover_sound_effect);
+    // app.add_observer(play_on_click_sound_effect);
 }
 
 /// Palette for widget interactions. Add this to an entity that supports
@@ -53,7 +54,8 @@ impl FromWorld for InteractionAssets {
         let assets = world.resource::<AssetServer>();
         Self {
             hover: assets.load("audio/sound_effects/button_hover.ogg"),
-            click: assets.load("audio/sound_effects/button_click.ogg"),
+            click: assets.load("audio/sound_effects/slime.ogg"),
+            // click: assets.load("audio/sound_effects/button_click.ogg"),
         }
     }
 }
@@ -85,5 +87,21 @@ fn play_on_click_sound_effect(
 
     if interaction_query.contains(trigger.target()) {
         commands.spawn(sound_effect(interaction_assets.click.clone()));
+    }
+}
+
+fn play_sounds_for_all_clicks(
+    mut commands: Commands,
+    interaction_assets: Option<Res<InteractionAssets>>,
+    interaction_query: Query<&Interaction, Changed<Interaction>>,
+) {
+    let Some(interaction_assets) = interaction_assets else {
+        return;
+    };
+
+    for interaction in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            commands.spawn(sound_effect(interaction_assets.click.clone()));
+        }
     }
 }
