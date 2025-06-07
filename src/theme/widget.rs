@@ -468,7 +468,7 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
             width: Percent(100.0),
             height: Percent(8.0),
             align_items: AlignItems::Center,
-            justify_content: JustifyContent::FlexEnd,
+            justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Row,
             column_gap: Px(8.0),
             padding: UiRect::default().with_right(Val::Px(0.0)),
@@ -487,16 +487,16 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                     color: rule.tiles[0]
                 }
             ),
-            color_picker(
-                rule.tiles[1],
-                image.clone(),
-                false,
-                ColorPickerButton {
-                    tile,
-                    index: 1,
-                    color: rule.tiles[1]
-                }
-            ),
+            // color_picker(
+            //     rule.tiles[1],
+            //     image.clone(),
+            //     false,
+            //     ColorPickerButton {
+            //         tile,
+            //         index: 1,
+            //         color: rule.tiles[1]
+            //     }
+            // ),
             (
                 Node {
                     display: Display::Grid,

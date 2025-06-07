@@ -207,7 +207,7 @@ impl Utility for Grid {
             rule.tiles
                 .iter()
                 .flatten()
-                .all(|tile| neighbours.contains(tile) ^ rule.invert)
+                .any(|tile| neighbours.contains(tile) ^ rule.invert)
                 .then_some(rule.result)
                 .flatten()
         } else {

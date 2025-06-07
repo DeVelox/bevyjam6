@@ -98,8 +98,10 @@ fn spawn_simulation_ui(mut commands: Commands) {
                 children![
                     (
                         Node {
+                            width: Val::Px(410.0),
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::FlexStart,
                             justify_content: JustifyContent::Center,
                             row_gap: Px(15.0),
                             ..default()
