@@ -1,8 +1,10 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
+use std::time::Duration;
+
 use bevy::{
     dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*,
-    ui::UiDebugOptions,
+    time::common_conditions::on_timer, ui::UiDebugOptions,
 };
 
 use crate::{
@@ -12,6 +14,7 @@ use crate::{
         logic::{IterationState, PlayerRules},
     },
     screens::Screen,
+    theme::shader::CustomMaterial,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -29,6 +32,7 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(Screen::Gameplay),
         attach_observers.after(spawn_level),
     );
+    app.add_systems(Update, debug_print.run_if(on_timer(Duration::from_secs(1))));
 }
 
 const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
@@ -86,11 +90,23 @@ fn toggle_picking(
 
 pub fn print_level(
     _: Trigger<Pointer<Click>>,
-    query: Query<&Tile, With<crate::game::level::Puzzle>>,
+    query: Query<(Entity, &Tile), With<crate::game::level::Puzzle>>,
 ) {
+    let mut tiles: Vec<(Entity, &Tile)> = query.iter().collect();
+    tiles.sort_by(|a, b| {
+        a.0.index()
+            .partial_cmp(&b.0.index())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     let mut level = vec![];
-    for tile in &query {
+    for (_, tile) in tiles {
         level.push(*tile as u8);
     }
     warn!("{:?}", level);
+}
+
+pub fn debug_print(query: Query<&MeshMaterial2d<CustomMaterial>>) {
+    for item in &query {
+        warn!("{:?}", item);
+    }
 }

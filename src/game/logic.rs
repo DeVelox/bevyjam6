@@ -6,7 +6,7 @@ use super::{
     animation::AnimationConfig,
     level::{Face, Grid, LevelAssets, PADDING, Puzzle, Tile, Utility},
 };
-use crate::{menus::Menu, screens::Screen};
+use crate::{menus::Menu, screens::Screen, theme::shader::CustomMaterial};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<PlayerRules>();
@@ -93,6 +93,7 @@ pub fn step_simulation(
     mut commands: Commands,
 ) {
     commands.remove_resource::<AutomaticSimulation>();
+    commands.insert_resource(DisableControls);
     state.set(IterationState::Simulating);
 }
 pub fn reset_simulation(_: Trigger<Pointer<Click>>, mut state: ResMut<NextState<IterationState>>) {
@@ -121,32 +122,39 @@ fn rendering_step(
     grid: Res<GridIterations>,
     board: Query<Entity, With<Puzzle>>,
     state: Res<State<IterationState>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<CustomMaterial>>,
 ) {
     let reset = grid.grid.len() == 1;
-    let image = level_assets.tilesheet.clone();
-    let atlas = level_assets.atlas.clone();
-    for (i, entity) in board.iter().enumerate() {
+    let mut tiles: Vec<Entity> = board.iter().collect();
+    tiles.sort_by(|a, b| {
+        a.index()
+            .partial_cmp(&b.index())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    for (i, entity) in tiles.iter().enumerate() {
         let tile = Tile::from_u8(grid.grid.last().unwrap()[i]);
+        let previous = Tile::from_u8(grid.grid.get(grid.grid.len().saturating_sub(2)).unwrap()[i]);
+        let material = CustomMaterial {
+            sprite_texture: Some(level_assets.tilesheet.clone()),
+            atlas_index: previous as u32,
+            dissolve_value: 1.0,
+            burn_size: 0.2,
+            burn_color: LinearRgba::from(tile.color()),
+        };
         if grid.changed(i) || reset {
             if *state.get() == IterationState::Displaying {
                 commands.spawn((
-                    ChildOf(entity),
-                    AnimationConfig::new(12, 16, 15),
+                    ChildOf(*entity),
                     StateScoped(IterationState::Displaying),
-                    Transform::from_xyz(0.0, 0.0, 0.2),
-                    Sprite {
-                        image: image.clone(),
-                        color: tile.color(),
-                        custom_size: Some(Vec2::splat(level_assets.tile_size - PADDING)),
-                        texture_atlas: Some(TextureAtlas {
-                            layout: atlas.clone(),
-                            index: 12,
-                        }),
-                        ..default()
-                    },
+                    Mesh2d(meshes.add(Rectangle::default())),
+                    AnimationConfig::new(materials.add(material), 15),
+                    Transform::default()
+                        .with_scale(Vec3::splat(level_assets.tile_size - PADDING))
+                        .with_translation(Vec3::new(0.0, 0.0, 0.1)),
                 ));
             } else {
-                commands.entity(entity).insert(tile);
+                commands.entity(*entity).insert(tile);
             }
         }
     }

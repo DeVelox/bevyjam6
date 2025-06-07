@@ -10,6 +10,7 @@ rand = "0.8"
 serde = "1.0"
 # bevy_egui = "0.34"
 bevy_common_assets = { version = "0.13", features = ["ron"] }
+bevy_shader_utils = "0.8"
 # Compile low-severity logs out of native builds for performance.
 log = { version = "0.4", features = [
     "max_level_debug",

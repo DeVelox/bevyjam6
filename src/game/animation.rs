@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
+use crate::theme::shader::CustomMaterial;
+
 use super::logic::IterationState;
 
 pub(super) fn plugin(app: &mut App) {
@@ -9,18 +11,16 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component)]
 pub struct AnimationConfig {
-    first_sprite_index: usize,
-    last_sprite_index: usize,
     fps: u8,
+    material: Handle<CustomMaterial>,
     frame_timer: Timer,
 }
 
 impl AnimationConfig {
-    pub fn new(first: usize, last: usize, fps: u8) -> Self {
+    pub fn new(material: Handle<CustomMaterial>, fps: u8) -> Self {
         Self {
-            first_sprite_index: first,
-            last_sprite_index: last,
             fps,
+            material,
             frame_timer: Self::timer_from_fps(fps),
         }
     }
@@ -30,28 +30,20 @@ impl AnimationConfig {
     }
 }
 
-// This system loops through all the sprites in the `TextureAtlas`, from  `first_sprite_index` to
-// `last_sprite_index` (both defined in `AnimationConfig`).
 fn execute_animations(
     time: Res<Time>,
+    mut query: Query<&mut AnimationConfig>,
     mut state: ResMut<NextState<IterationState>>,
-    mut query: Query<(&mut AnimationConfig, &mut Sprite)>,
+    mut materials: ResMut<Assets<CustomMaterial>>,
 ) {
-    for (mut config, mut sprite) in &mut query {
-        // We track how long the current sprite has been displayed for
+    for mut config in &mut query {
         config.frame_timer.tick(time.delta());
-
-        // If it has been displayed for the user-defined amount of time (fps)...
-        if config.frame_timer.just_finished() {
-            if let Some(atlas) = &mut sprite.texture_atlas {
-                if atlas.index == config.last_sprite_index {
-                    // ...and it IS the last frame, then we move back to the first frame and stop.
-                    atlas.index = config.first_sprite_index;
+        if let Some(material) = materials.get_mut(config.material.id()) {
+            if config.frame_timer.just_finished() {
+                if material.dissolve_value <= 0.0 {
                     state.set(IterationState::Ready);
                 } else {
-                    // ...and it is NOT the last frame, then we move to the next frame...
-                    atlas.index += 1;
-                    // ...and reset the frame timer to start counting all over again
+                    material.dissolve_value -= 1.0 / config.fps as f32;
                     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
                 }
             }

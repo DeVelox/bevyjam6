@@ -5,6 +5,7 @@
 
 pub mod interaction;
 pub mod palette;
+pub mod shader;
 pub mod widget;
 
 #[allow(unused_imports)]
@@ -16,4 +17,5 @@ use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(interaction::plugin);
+    app.add_plugins(shader::plugin);
 }
