@@ -42,10 +42,11 @@ pub(super) fn plugin(app: &mut App) {
                     .or(resource_removed::<Victory>),
             ),
             (
-                handle_mask_buttons,
+                handle_mask_buttons.run_if(resource_exists::<MousePainting>),
                 handle_invert_buttons,
                 handle_reset_buttons,
                 handle_color_pickers,
+                toggle_mouse_painting,
             )
                 .run_if(not(resource_exists::<DisableControls>)),
         )
@@ -301,22 +302,29 @@ impl ColorPickerButton {
     }
 }
 
-fn handle_color_pickers(
-    mut interaction_query: Query<(&Interaction, &mut ColorPickerButton), Changed<Interaction>>,
+#[derive(Resource, Default)]
+pub struct MousePainting;
+
+fn toggle_mouse_painting(
+    mut commands: Commands,
+    interaction_query: Query<(&Interaction, &mut MaskToggleButton)>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    held_state: Option<Res<MousePainting>>,
     mut rules: ResMut<PlayerRules>,
 ) {
-    let color_pool = &rules.color_pool.clone();
-    for (interaction, mut button) in &mut interaction_query {
-        if *interaction == Interaction::Pressed {
-            if let Some(rule) = rules.rules.get_mut(&button.tile) {
-                match button.index {
-                    0 => rule.tiles[0] = button.change_color(color_pool),
-                    1 => rule.tiles[1] = button.change_color(color_pool),
-                    2 => rule.result = button.change_color(color_pool),
-                    _ => {}
-                };
-            }
-        }
+    if mouse_input.pressed(MouseButton::Left) && held_state.is_some() {
+        return;
+    }
+    if interaction_query
+        .iter()
+        .any(|(interaction, _)| *interaction == Interaction::Pressed)
+    {
+        commands.insert_resource(MousePainting);
+    } else {
+        commands.remove_resource::<MousePainting>();
+    }
+    for (_, rule) in &mut rules.rules {
+        rule.changed.fill(false);
     }
 }
 
@@ -325,9 +333,12 @@ fn handle_mask_buttons(
     mut rules: ResMut<PlayerRules>,
 ) {
     for (interaction, button) in &interaction_query {
-        if *interaction == Interaction::Pressed {
+        if *interaction != Interaction::None {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
-                rule.mask[button.index] = !rule.mask[button.index];
+                if !rule.changed[button.index] {
+                    rule.changed[button.index] = true;
+                    rule.mask[button.index] = !rule.mask[button.index];
+                }
             }
         }
     }
@@ -354,6 +365,25 @@ fn handle_reset_buttons(
         if *interaction == Interaction::Pressed {
             if let Some(rule) = rules.rules.get_mut(&button.tile) {
                 *rule = Rule::default();
+            }
+        }
+    }
+}
+
+fn handle_color_pickers(
+    mut interaction_query: Query<(&Interaction, &mut ColorPickerButton), Changed<Interaction>>,
+    mut rules: ResMut<PlayerRules>,
+) {
+    let color_pool = &rules.color_pool.clone();
+    for (interaction, mut button) in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Some(rule) = rules.rules.get_mut(&button.tile) {
+                match button.index {
+                    0 => rule.tiles[0] = button.change_color(color_pool),
+                    1 => rule.tiles[1] = button.change_color(color_pool),
+                    2 => rule.result = button.change_color(color_pool),
+                    _ => {}
+                };
             }
         }
     }

@@ -46,6 +46,7 @@ pub struct Rule {
     pub tiles: [Option<Tile>; 2],
     pub invert: bool,
     pub mask: [bool; 8],
+    pub changed: [bool; 8],
     pub result: Option<Tile>,
 }
 impl Default for Rule {
@@ -54,6 +55,7 @@ impl Default for Rule {
             tiles: [None, None],
             invert: false,
             mask: [true; 8],
+            changed: [false; 8],
             result: None,
         }
     }
