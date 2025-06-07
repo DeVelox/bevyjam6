@@ -421,13 +421,6 @@ pub fn direction_picker(
                             true => 10.0,
                             false => 0.0,
                         })),
-                        // if is_invert_toggle {
-                        //     if value { Text::new("") } else { Text::new("x") }
-                        // } else {
-                        //     Text::new("")
-                        // },
-                        // TextColor(BUTTON_TEXT_ALT),
-                        // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,
                     )],
                 ))

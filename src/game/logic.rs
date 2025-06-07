@@ -153,12 +153,13 @@ fn rendering_step(
         #[cfg(feature = "dev")]
         commands
             .entity(tile)
-            .insert(crate::dev_tools::EditorColorPickerButton {
+            .insert(crate::dev_tools::EditorTileColor {
                 index: i,
                 color: Some(Tile::from_u8(current[i])),
             })
-            .insert(Pickable::IGNORE)
-            .observe(crate::dev_tools::handle_debug_editor);
+            .insert(Pickable::default())
+            .observe(crate::dev_tools::handle_debug_editor)
+            .observe(crate::dev_tools::handle_debug_painter);
         commands.spawn((
             ChildOf(tile),
             if grid.is_correct(i) {

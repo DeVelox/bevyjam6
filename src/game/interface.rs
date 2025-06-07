@@ -1,5 +1,8 @@
 use Val::Px;
-use bevy::{ecs::spawn::SpawnIter, prelude::*};
+use bevy::{
+    ecs::spawn::{SpawnIter, SpawnWith},
+    prelude::*,
+};
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
 use crate::{
     menus::Menu,
@@ -116,17 +119,34 @@ fn spawn_simulation_ui(mut commands: Commands) {
                             ..default()
                         },
                         children![
+                            #[cfg(feature = "dev")]
                             (
-                                #[cfg(feature = "dev")]
-                                widget::button_custom(
-                                    "󰉉",
-                                    crate::dev_tools::print_level,
-                                    None,
-                                    Some(ButtonSize {
-                                        width: 382.0,
-                                        height: BUTTON_SIZE_ALT.height
-                                    })
-                                ),
+                                Node {
+                                    display: Display::Flex,
+                                    flex_direction: FlexDirection::Row,
+                                    column_gap: Px(8.0),
+                                    ..default()
+                                },
+                                Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+                                    for tile in Tile::all().into_iter().take(8) {
+                                        parent.spawn(crate::dev_tools::editor_color_picker(
+                                            Some(tile),
+                                            crate::dev_tools::EditorColorPickerButton {
+                                                color: Some(tile),
+                                            },
+                                        ));
+                                    }
+                                }))
+                            ),
+                            #[cfg(feature = "dev")]
+                            widget::button_custom(
+                                "󰉉",
+                                crate::dev_tools::print_level,
+                                None,
+                                Some(ButtonSize {
+                                    width: 382.0,
+                                    height: BUTTON_SIZE_ALT.height
+                                })
                             ),
                             (
                                 Node {
