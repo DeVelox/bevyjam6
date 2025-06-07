@@ -478,17 +478,33 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
         Pickable::IGNORE,
         children![
             color_picker(
-                Some(tile),
+                rule.tiles[0],
                 image.clone(),
-                true,
+                false,
                 ColorPickerButton {
-                    index: 99, // disabled
-                    ..default()
+                    tile,
+                    index: 0,
+                    color: rule.tiles[0]
+                }
+            ),
+            color_picker(
+                rule.tiles[1],
+                image.clone(),
+                false,
+                ColorPickerButton {
+                    tile,
+                    index: 1,
+                    color: rule.tiles[1]
                 }
             ),
             (
                 Node {
                     display: Display::Grid,
+                    margin: UiRect {
+                        left: Val::Px(16.0),
+                        right: Val::Px(16.0),
+                        ..default()
+                    },
                     row_gap: Px(5.0),
                     column_gap: Px(5.0),
                     grid_template_columns: RepeatedGridTrack::px(3, 16.0),
@@ -514,23 +530,12 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
                 }),),
             ),
             color_picker(
-                rule.tiles[0],
+                Some(tile),
                 image.clone(),
-                false,
+                true,
                 ColorPickerButton {
-                    tile,
-                    index: 0,
-                    color: rule.tiles[0]
-                }
-            ),
-            color_picker(
-                rule.tiles[1],
-                image.clone(),
-                false,
-                ColorPickerButton {
-                    tile,
-                    index: 1,
-                    color: rule.tiles[1]
+                    index: 99, // disabled
+                    ..default()
                 }
             ),
             (

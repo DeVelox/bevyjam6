@@ -65,7 +65,7 @@ fn spawn_rules_ui(
     mut commands: Commands,
     sidebar: Single<(Entity, Option<&Children>), With<RulesWidget>>,
     level_assets: Res<LevelAssets>,
-    player_input: Res<PlayerRules>,
+    player_rules: Res<PlayerRules>,
 ) {
     let (entity, children) = sidebar.into_inner();
     if let Some(children) = children {
@@ -73,10 +73,15 @@ fn spawn_rules_ui(
             commands.entity(child).despawn();
         }
     }
-    let rule_widgets: Vec<_> = player_input
-        .rules
-        .iter()
-        .map(|(tile, rule)| widget::rule_ui(*tile, rule.clone(), level_assets.tilesheet.clone()))
+    let mut rules: Vec<_> = player_rules.rules.keys().collect();
+    rules.sort();
+
+    let rule_widgets: Vec<_> = rules
+        .into_iter()
+        .map(|tile| {
+            let rule = &player_rules.rules[tile];
+            widget::rule_ui(*tile, rule.clone(), level_assets.tilesheet.clone())
+        })
         .collect();
     commands
         .entity(entity)
@@ -275,7 +280,7 @@ pub struct ResetRuleButton {
     pub tile: Tile,
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 pub struct ColorPickerButton {
     pub tile: Tile,
     pub index: usize,
