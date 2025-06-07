@@ -106,7 +106,7 @@ fn spawn_simulation_ui(mut commands: Commands) {
                         Node {
                             flex_direction: FlexDirection::Column,
                             width: Val::Px(410.0),
-                            row_gap: Px(8.0),
+                            row_gap: Px(16.0),
                             ..default()
                         },
                         children![

@@ -12,7 +12,8 @@ pub const BUTTON_PRESSED_BACKGROUND: Color = Color::srgb(0.173, 0.118, 0.192);
 pub const BUTTON_TEXT_ALT: Color = Color::srgb(0.173, 0.118, 0.192);
 pub const BUTTON_BACKGROUND_ALT: Color = Color::srgb(0.914, 0.522, 0.216);
 pub const BUTTON_HOVERED_BACKGROUND_ALT: Color = Color::srgb(0.953, 0.659, 0.200);
-pub const BUTTON_PRESSED_BACKGROUND_ALT: Color = Color::srgb(0.871, 0.365, 0.227);
+pub const BUTTON_PRESSED_BACKGROUND_ALT: Color = Color::srgb(0.580, 0.286, 0.227);
+// pub const BUTTON_PRESSED_BACKGROUND_ALT: Color = Color::srgb(0.871, 0.365, 0.227);
 
 pub const RED: Color = Color::srgb(0.675, 0.157, 0.278);
 pub const GREEN: Color = Color::srgb(0.149, 0.522, 0.298);

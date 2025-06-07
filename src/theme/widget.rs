@@ -28,7 +28,7 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
-            row_gap: Px(8.0),
+            row_gap: Px(16.0),
             ..default()
         },
         // Don't block picking events for other UI roots.
@@ -120,6 +120,13 @@ where
                 .spawn((
                     Name::new("Button Inner"),
                     Button,
+                    BoxShadow::new(
+                        BUTTON_PRESSED_BACKGROUND,
+                        Val::Px(0.0),
+                        Val::Px(8.0),
+                        Val::Percent(0.0),
+                        Val::Px(0.0),
+                    ),
                     BackgroundColor(BUTTON_BACKGROUND),
                     InteractionPalette {
                         none: BUTTON_BACKGROUND,
@@ -222,6 +229,13 @@ where
                     Name::new("Button Inner"),
                     Button,
                     BackgroundColor(colors.background),
+                    BoxShadow::new(
+                        colors.pressed,
+                        Val::Px(0.0),
+                        Val::Px(8.0),
+                        Val::Percent(0.0),
+                        Val::Px(0.0),
+                    ),
                     InteractionPalette {
                         none: colors.background,
                         hovered: colors.hovered,
@@ -277,7 +291,7 @@ pub fn ui_split(
             align_items: align,
             justify_content: justify,
             flex_direction: FlexDirection::Column,
-            row_gap: Px(8.0),
+            row_gap: Px(16.0),
             padding,
             ..default()
         },
