@@ -113,8 +113,7 @@ fn simulation_step(
     mut grid: ResMut<GridIterations>,
     mut state: ResMut<NextState<IterationState>>,
 ) {
-    debug!("{}", grid.grid.len());
-    let current_grid = grid.grid.last().expect("Level not loaded.");
+    let current_grid = grid.grid.last().unwrap();
     let mut new_grid = current_grid.clone();
     for (i, new_tile) in new_grid.iter_mut().enumerate().take(current_grid.len()) {
         if let Some(tile) = current_grid.check_neighbours(i, &input) {
@@ -148,6 +147,16 @@ fn rendering_step(
 
     for (i, bundle) in puzzle.into_iter().enumerate() {
         let tile = commands.spawn(bundle).id();
+
+        #[cfg(feature = "dev")]
+        commands
+            .entity(tile)
+            .insert(crate::dev_tools::EditorColorPickerButton {
+                index: i,
+                color: Some(Tile::from_u8(current[i])),
+            })
+            .insert(Pickable::IGNORE)
+            .observe(crate::dev_tools::handle_debug_editor);
         commands.spawn((
             ChildOf(tile),
             if grid.is_correct(i) {
@@ -164,19 +173,17 @@ fn rendering_step(
             burn_size: 0.2,
             burn_color: LinearRgba::from(Tile::from_u8(current[i]).color()),
         });
-        if current[i] != previous[i] {
-            if *state.get() == IterationState::Displaying {
-                commands.spawn((
-                    ChildOf(tile),
-                    StateScoped(IterationState::Displaying),
-                    Mesh2d(mesh.clone()),
-                    MeshMaterial2d(material.clone()),
-                    AnimationConfig::new(material.clone(), 60),
-                    Transform::default()
-                        .with_scale(Vec3::splat(level_assets.tile_size - PADDING))
-                        .with_translation(Vec3::new(0.0, 0.0, 0.1)),
-                ));
-            }
+        if current[i] != previous[i] && *state.get() == IterationState::Displaying {
+            commands.spawn((
+                ChildOf(tile),
+                StateScoped(IterationState::Displaying),
+                Mesh2d(mesh.clone()),
+                MeshMaterial2d(material.clone()),
+                AnimationConfig::new(material.clone(), 60),
+                Transform::default()
+                    .with_scale(Vec3::splat(level_assets.tile_size - PADDING))
+                    .with_translation(Vec3::new(0.0, 0.0, 0.1)),
+            ));
         }
     }
 }

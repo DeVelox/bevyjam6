@@ -7,9 +7,8 @@ use bevy::{
 
 use crate::{
     game::{
-        interface::ColorPickerButton,
         level::{Level, Puzzle, Tile},
-        logic::{IterationState, PlayerRules},
+        logic::{GridIterations, IterationState, PlayerRules},
     },
     screens::Screen,
 };
@@ -25,7 +24,6 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (toggle_debug_ui, toggle_picking).run_if(input_just_pressed(TOGGLE_KEY)),
     );
-    app.add_systems(Update, attach_observers);
 }
 
 const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
@@ -34,57 +32,52 @@ fn toggle_debug_ui(mut options: ResMut<UiDebugOptions>) {
     options.toggle();
 }
 
-fn handle_debug_editor(
+#[derive(Component)]
+pub struct EditorColorPickerButton {
+    pub index: usize,
+    pub color: Option<Tile>,
+}
+impl EditorColorPickerButton {
+    fn change_color(&mut self, color_pool: &[Option<Tile>]) -> Option<Tile> {
+        let mut new_color = color_pool[0];
+        for (index, &color) in color_pool.iter().enumerate() {
+            if color == self.color {
+                if index + 1 < color_pool.len() {
+                    new_color = color_pool[index + 1];
+                }
+                break;
+            }
+        }
+        self.color = new_color;
+        new_color
+    }
+}
+pub fn handle_debug_editor(
     trigger: Trigger<Pointer<Click>>,
-    mut query: Query<(Entity, &mut ColorPickerButton), With<Puzzle>>,
+    mut query: Query<(Entity, &mut EditorColorPickerButton), With<Puzzle>>,
+    mut grid_iter: ResMut<GridIterations>,
     rules: Res<PlayerRules>,
     mut commands: Commands,
 ) {
     let mut color_pool = rules.color_pool.clone();
     color_pool.pop();
     if let Ok((entity, mut button)) = query.get_mut(trigger.target()) {
-        commands
-            .entity(entity)
-            .insert(button.change_color(&color_pool).unwrap());
+        let new_color = button.change_color(&color_pool).unwrap();
+        grid_iter.grid.last_mut().unwrap()[button.index] = new_color as u8;
+        commands.entity(entity).insert(new_color);
     }
 }
 
-fn attach_observers(
-    mut commands: Commands,
-    query: Query<(Entity, &Tile), (With<Puzzle>, Without<ColorPickerButton>)>,
-) {
-    for (entity, &tile) in &query {
-        commands
-            .entity(entity)
-            .insert((ColorPickerButton {
-                index: 99, // disabled
-                color: Some(tile),
-                ..default()
-            },))
-            .observe(handle_debug_editor);
-    }
-}
-
-fn toggle_picking(mut commands: Commands, query: Query<(Entity, Option<&Pickable>), With<Puzzle>>) {
+fn toggle_picking(mut commands: Commands, query: Query<(Entity, &Pickable), With<Puzzle>>) {
     for (entity, pickable) in &query {
-        if pickable.is_some() {
-            commands.entity(entity).remove::<Pickable>();
-        } else {
+        if *pickable == Pickable::IGNORE {
             commands.entity(entity).insert(Pickable::default());
+        } else {
+            commands.entity(entity).insert(Pickable::IGNORE);
         }
     }
 }
 
-pub fn print_level(_: Trigger<Pointer<Click>>, query: Query<(Entity, &Tile), With<Puzzle>>) {
-    let mut tiles: Vec<(Entity, &Tile)> = query.iter().collect();
-    tiles.sort_by(|a, b| {
-        a.0.index()
-            .partial_cmp(&b.0.index())
-            .unwrap_or(std::cmp::Ordering::Equal)
-    });
-    let mut level = vec![];
-    for (_, tile) in tiles {
-        level.push(*tile as u8);
-    }
-    warn!("{:?}", level);
+pub fn print_level(_: Trigger<Pointer<Click>>, grid: Res<GridIterations>) {
+    warn!("{:?}", grid.grid.last().unwrap());
 }

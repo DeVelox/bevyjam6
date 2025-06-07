@@ -1,8 +1,6 @@
 use Val::Px;
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
-#[cfg(feature = "dev")]
-use crate::dev_tools::print_level;
 use crate::{
     menus::Menu,
     screens::Screen,
@@ -119,7 +117,7 @@ fn spawn_simulation_ui(mut commands: Commands) {
                                 #[cfg(feature = "dev")]
                                 widget::button_custom(
                                     "󰉉",
-                                    print_level,
+                                    crate::dev_tools::print_level,
                                     None,
                                     Some(ButtonSize {
                                         width: 382.0,
