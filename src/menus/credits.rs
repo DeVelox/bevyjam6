@@ -24,7 +24,7 @@ fn spawn_credits_menu(mut commands: Commands) {
         GlobalZIndex(2),
         StateScoped(Menu::Credits),
         children![
-            widget::header("Created by"),
+            widget::header("Creators"),
             created_by(),
             widget::header(" "), // just a gap
             widget::header("Assets"),
@@ -37,9 +37,9 @@ fn spawn_credits_menu(mut commands: Commands) {
 
 fn created_by() -> impl Bundle {
     grid(vec![
-        ["DeVelox", "Code all the things"],
-        ["MrRgon", "Made all the puzzles"],
-        ["EjayFreeKay", "Drew all the art"],
+        ["DeVelox", "Coded all the things"],
+        ["MrRgon", "Designed all the things"],
+        ["EjayFreeKay", "Painted all the things"],
     ])
 }
 
