@@ -209,7 +209,8 @@ pub fn update_button_text(
         } else if auto.is_none() && text.0 == "" {
             text.0 = "".to_string();
         }
-        let icons = if name.as_str() == "Rule Reset" {
+        let rule_reset = name.as_str() == "Rule Reset";
+        let icons = if rule_reset {
             ["󰑙", "󰌾"]
         } else {
             ["󰑙", "󰝳"]
@@ -242,7 +243,7 @@ pub fn update_button_text(
                 ),
             ));
         } else if (victory.is_none() && text.0 == "")
-            || (locked.is_none() && text.0 == "󰑙")
+            || (locked.is_none() && text.0 == "󰑙" && !rule_reset)
             || (auto.is_some() && text.0 == "")
         {
             let colors = ButtonColors::default();
