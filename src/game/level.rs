@@ -209,10 +209,16 @@ pub enum Level {
     #[default]
     Beginner1,
     Beginner2,
+    Beginner3,
     Intermediate1,
     Intermediate2,
     Intermediate3,
+    Intermediate4,
+    Intermediate5,
     Expert1,
+    Expert2,
+    Expert3,
+    Expert4,
 }
 
 pub trait Switch {
@@ -223,11 +229,17 @@ impl Switch for Level {
     fn next(&self) -> Self {
         match self {
             Level::Beginner1 => Level::Beginner2,
-            Level::Beginner2 => Level::Intermediate1,
+            Level::Beginner2 => Level::Beginner3,
+            Level::Beginner3 => Level::Intermediate1,
             Level::Intermediate1 => Level::Intermediate2,
             Level::Intermediate2 => Level::Intermediate3,
-            Level::Intermediate3 => Level::Expert1,
-            Level::Expert1 => Level::Beginner1,
+            Level::Intermediate3 => Level::Intermediate4,
+            Level::Intermediate4 => Level::Intermediate5,
+            Level::Intermediate5 => Level::Expert1,
+            Level::Expert1 => Level::Expert2,
+            Level::Expert2 => Level::Expert3,
+            Level::Expert3 => Level::Expert4,
+            Level::Expert4 => Level::Beginner1,
         }
     }
 }
