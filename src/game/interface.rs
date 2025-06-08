@@ -63,7 +63,6 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_rules_ui(
     mut commands: Commands,
     sidebar: Single<(Entity, Option<&Children>), With<RulesWidget>>,
-    level_assets: Res<LevelAssets>,
     player_rules: Res<PlayerRules>,
 ) {
     let (entity, children) = sidebar.into_inner();
@@ -79,7 +78,7 @@ fn spawn_rules_ui(
         .into_iter()
         .map(|tile| {
             let rule = &player_rules.rules[tile];
-            widget::rule_ui(*tile, rule.clone(), level_assets.tilesheet.clone())
+            widget::rule_ui(*tile, rule.clone())
         })
         .collect();
     commands
@@ -98,7 +97,7 @@ pub fn spawn_simulation_ui(mut commands: Commands) {
                 children![
                     (
                         Node {
-                            width: Val::Px(420.0),
+                            width: Val::Px(430.0),
                             height: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::FlexStart,

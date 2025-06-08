@@ -320,12 +320,7 @@ pub fn ui_row(name: impl Into<Cow<'static, str>>) -> impl Bundle {
 pub struct ColorPickerEvent {
     pub color: Color,
 }
-pub fn color_picker(
-    tile: Option<Tile>,
-    _image: Handle<Image>,
-    is_key: bool,
-    action: ColorPickerButton,
-) -> impl Bundle {
+pub fn color_picker(tile: Option<Tile>, action: impl Bundle) -> impl Bundle {
     let mut offset = Vec2::ZERO;
     if let Some(tile) = tile {
         offset.x = tile as u8 as f32;
@@ -333,11 +328,6 @@ pub fn color_picker(
         offset.x = Tile::all().len() as f32 - 1.0;
         offset.y = 1.0;
     }
-    let color = if is_key {
-        BUTTON_BACKGROUND
-    } else {
-        BUTTON_PRESSED_BACKGROUND
-    };
     let background_color = if let Some(tile) = tile {
         tile.color()
     } else {
@@ -350,13 +340,12 @@ pub fn color_picker(
             parent
                 .spawn((
                     Name::new("Picker Inner"),
-                    Button,
                     action,
-                    BackgroundColor(color),
+                    BackgroundColor(BUTTON_PRESSED_BACKGROUND),
                     InteractionPalette {
-                        none: color,
+                        none: BUTTON_PRESSED_BACKGROUND,
                         hovered: BUTTON_BACKGROUND,
-                        pressed: BUTTON_PRESSED_BACKGROUND,
+                        pressed: BUTTON_BACKGROUND,
                     },
                     children![(
                         Name::new("Picker Color"),
@@ -366,6 +355,7 @@ pub fn color_picker(
                             ..default()
                         },
                         BackgroundColor(background_color),
+                        BorderRadius::all(Val::Px(10.0)),
                         Pickable::IGNORE,
                     )],
                 ))
@@ -441,7 +431,7 @@ pub fn direction_picker(
         })),
     )
 }
-pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
+pub fn rule_ui(tile: Tile, rule: Rule) -> impl Bundle {
     (
         Name::new("Rule UI"),
         Node {
@@ -452,94 +442,121 @@ pub fn rule_ui(tile: Tile, rule: Rule, image: Handle<Image>) -> impl Bundle {
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Row,
             column_gap: Px(8.0),
-            padding: UiRect::default().with_right(Val::Px(0.0)),
             ..default()
         },
         // Don't block picking events for other UI roots.
         Pickable::IGNORE,
         children![
-            color_picker(
-                Some(tile),
-                image.clone(),
-                true,
-                ColorPickerButton {
-                    index: 99, // disabled
-                    ..default()
-                }
-            ),
-            (
-                Text::new(""),
-                TextColor(DISABLED),
-                TextFont::from_font_size(24.0),
-            ),
-            color_picker(
-                rule.result,
-                image.clone(),
-                false,
-                ColorPickerButton {
-                    tile,
-                    index: 2,
-                    color: rule.result
-                }
-            ),
             (
                 Node {
-                    display: Display::Grid,
-                    margin: UiRect {
-                        left: Val::Px(16.0),
-                        right: Val::Px(16.0),
-                        ..default()
-                    },
-                    row_gap: Px(5.0),
-                    column_gap: Px(5.0),
-                    grid_template_columns: RepeatedGridTrack::px(3, 16.0),
-                    ..default()
-                },
-                Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
-                    for i in [5, 6, 7, 3, 4, 0, 1, 2] {
-                        if i == 4 {
-                            parent.spawn(direction_picker(
-                                rule.invert,
-                                false,
-                                true,
-                                InvertToggleButton { tile },
-                            ));
-                        }
-                        parent.spawn(direction_picker(
-                            rule.mask[i],
-                            rule.invert,
-                            false,
-                            MaskToggleButton { tile, index: i },
-                        ));
-                    }
-                }),),
-            ),
-            color_picker(
-                rule.tiles[0],
-                image.clone(),
-                false,
-                ColorPickerButton {
-                    tile,
-                    index: 0,
-                    color: rule.tiles[0]
-                }
-            ),
-            (
-                Button,
-                ResetRuleButton { tile },
-                Node {
-                    width: Val::Px(30.0),
-                    height: Val::Px(30.0),
+                    padding: UiRect::all(Val::Px(8.0)),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Px(8.0),
                     ..default()
                 },
-                children![(
-                    Name::new("Rule Reset"),
-                    Text::new("󰑙"),
-                    TextColor(DISABLED),
-                    TextFont::from_font_size(32.0),
-                )]
+                BackgroundColor(tile.color()),
+                BorderRadius::all(Val::Px(10.0)),
+                children![
+                    color_picker(Some(tile), ()),
+                    (
+                        Node {
+                            display: Display::Grid,
+                            margin: UiRect {
+                                left: Val::Px(8.0),
+                                right: Val::Px(8.0),
+                                ..default()
+                            },
+                            row_gap: Px(5.0),
+                            column_gap: Px(5.0),
+                            grid_template_columns: RepeatedGridTrack::px(3, 16.0),
+                            ..default()
+                        },
+                        Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+                            for i in [5, 6, 7, 3, 4, 0, 1, 2] {
+                                if i == 4 {
+                                    parent.spawn(direction_picker(
+                                        rule.invert,
+                                        false,
+                                        true,
+                                        InvertToggleButton { tile },
+                                    ));
+                                }
+                                parent.spawn(direction_picker(
+                                    rule.mask[i],
+                                    rule.invert,
+                                    false,
+                                    MaskToggleButton { tile, index: i },
+                                ));
+                            }
+                        })),
+                    ),
+                    color_picker(
+                        rule.tiles[0],
+                        (
+                            Button,
+                            ColorPickerButton {
+                                tile,
+                                index: 0,
+                                color: rule.tiles[0],
+                            },
+                        )
+                    ),
+                ]
+            ),
+            (
+                Node {
+                    padding: UiRect::all(Val::Px(8.0)).with_left(Val::Px(16.0)),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Row,
+                    margin: UiRect::default().with_left(Val::Px(-24.0)),
+                    column_gap: Px(8.0),
+                    ..default()
+                },
+                ZIndex(-1),
+                BackgroundColor(if let Some(tile) = rule.result {
+                    tile.color()
+                } else {
+                    BUTTON_PRESSED_BACKGROUND
+                }),
+                BorderRadius::all(Val::Px(10.0)),
+                children![
+                    (
+                        Text::new(""),
+                        TextColor(DISABLED),
+                        TextFont::from_font_size(24.0),
+                    ),
+                    color_picker(
+                        rule.result,
+                        (
+                            Button,
+                            ColorPickerButton {
+                                tile,
+                                index: 2,
+                                color: rule.result
+                            }
+                        )
+                    ),
+                    (
+                        Button,
+                        ResetRuleButton { tile },
+                        Node {
+                            width: Val::Px(30.0),
+                            height: Val::Px(30.0),
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::Center,
+                            ..default()
+                        },
+                        children![(
+                            Name::new("Rule Reset"),
+                            Text::new("󰑙"),
+                            TextColor(DISABLED),
+                            TextFont::from_font_size(32.0),
+                        )]
+                    ),
+                ]
             ),
         ],
     )
