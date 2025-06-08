@@ -3,6 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{game::interface::go_next_level, menus::Menu, theme::widget};
+use bevy_shuffle_bag::ShuffleBag;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Victory), spawn_victory_menu);
@@ -13,12 +14,27 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 fn spawn_victory_menu(mut commands: Commands) {
+    let mut rng = rand::thread_rng();
+    let mut victory_messages = ShuffleBag::try_new(
+        [
+            "Lightning fast! Nice work!",
+            "I Lava what you did there!",
+            "Wood solve again, 10/10!",
+            "You're on Fire!",
+            "Mother Earth would be proud!",
+            "Water those?",
+            "No time for Bed, you Rock!",
+            "Nice solution, no Salt!",
+        ],
+        &mut rng,
+    )
+    .unwrap();
     commands.spawn((
         widget::ui_root("Victory Menu"),
         GlobalZIndex(2),
         StateScoped(Menu::Victory),
         children![
-            widget::header("Elementary, my dear Cubeson!"),
+            widget::header(*victory_messages.pick(&mut rng)),
             widget::header(" "), // just a gap
             widget::button("Go Back", close_menu),
             widget::button("Next Level", go_next_level),

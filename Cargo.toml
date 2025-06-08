@@ -21,6 +21,7 @@ tracing = { version = "0.1", features = [
     "max_level_debug",
     "release_max_level_warn",
 ] }
+bevy_shuffle_bag = "0.2.0"
 
 # [patch.crates-io]
 # bevy_egui = { git = "https://github.com/vladbat00/bevy_egui.git" }

@@ -9,6 +9,7 @@ dependencies = [
  "bevy",
  "bevy_common_assets",
  "bevy_shader_utils",
+ "bevy_shuffle_bag",
  "log",
  "rand",
  "serde",
@@ -1158,6 +1159,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ca804d25d2efb6de1ea188f59923a52bd28d20f990ac48267e198b3720689c5"
 dependencies = [
  "bevy",
+]
+
+[[package]]
+name = "bevy_shuffle_bag"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0de164d02db147c74925ea3dd702845abbed64ca5763767d23c7f30777bacda"
+dependencies = [
+ "bevy",
+ "rand",
+ "tracing",
 ]
 
 [[package]]
