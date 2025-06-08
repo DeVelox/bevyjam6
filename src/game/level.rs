@@ -47,7 +47,7 @@ impl FromWorld for LevelAssets {
         Self {
             atlas,
             font: assets.load("fonts/JetBrainsMonoNerdFontPropo-Regular.ttf"),
-            music: assets.load("audio/music/Fluffing A Duck.ogg"),
+            music: assets.load("audio/music/Cool-Puzzle-Groovin-2.ogg"),
             puzzles: assets.load("levels/puzzles.ron"),
             solutions: assets.load("levels/solutions.ron"),
             tilesheet: assets.load("images/tilesheet.png"),

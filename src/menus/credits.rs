@@ -45,8 +45,8 @@ fn created_by() -> impl Bundle {
 
 fn assets() -> impl Bundle {
     grid(vec![
-        ["Button SFX", "CC0 by Jaszunio15"],
-        ["Music", "CC BY 3.0 by Kevin MacLeod"],
+        ["Button SFX", "CC0 by D4XX - www.freesound.org"],
+        ["Music", "Eric Matyas - www.soundimage.org"],
         ["JetBrains Mono font", "OFL v1.1 by Jetbrains"],
         [
             "Bevy logo",
@@ -106,7 +106,7 @@ impl FromWorld for CreditsAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
         Self {
-            music: assets.load("audio/music/Monkeys Spinning Monkeys.ogg"),
+            music: assets.load("audio/music/Winding-Down.ogg"),
         }
     }
 }
