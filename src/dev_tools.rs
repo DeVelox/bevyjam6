@@ -1,15 +1,15 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
 use bevy::{
-    dev_tools::states::log_transitions, ecs::spawn::SpawnWith,
-    input::common_conditions::input_just_pressed, prelude::*, ui::UiDebugOptions,
+    ecs::spawn::SpawnWith, input::common_conditions::input_just_pressed, prelude::*,
+    ui::UiDebugOptions,
 };
 
 use crate::{
     game::{
         interface::{RightSidebar, spawn_simulation_ui},
-        level::{Level, Puzzle, Tile},
-        logic::{GridIterations, IterationState, PlayerRules},
+        level::{Puzzle, Tile},
+        logic::{GridIterations, PlayerRules},
     },
     screens::Screen,
     theme::{
@@ -21,9 +21,9 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     // Log `Screen` state transitions.
-    app.add_systems(Update, log_transitions::<Screen>);
-    app.add_systems(Update, log_transitions::<Level>);
-    app.add_systems(Update, log_transitions::<IterationState>);
+    // app.add_systems(Update, log_transitions::<Screen>);
+    // app.add_systems(Update, log_transitions::<Level>);
+    // app.add_systems(Update, log_transitions::<IterationState>);
 
     // Toggle the debug overlay for UI.
     app.add_systems(
