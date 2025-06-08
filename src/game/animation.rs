@@ -44,7 +44,6 @@ fn execute_animations(
                     state.set(IterationState::Ready);
                 } else {
                     material.params.y -= ANIMATION_DURATION / config.fps as f32;
-                    info!("Animation progress: {}", material.params.y);
                     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
                 }
             }

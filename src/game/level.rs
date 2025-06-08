@@ -91,6 +91,7 @@ pub fn spawn_level(
         grid_iter.goal = (*grid).to_vec();
         commands.spawn_batch(grid.render_solution(parent));
     }
+    commands.insert_resource(PlayerRules::default());
     state.set(IterationState::Reset);
 }
 

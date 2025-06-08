@@ -125,7 +125,6 @@ pub fn handle_debug_editor(
             .filter(|x| x.is_some())
             .copied()
             .collect();
-        info!("Color pool: {:?}", color_pool);
         if let Ok((entity, mut button)) = query.get_mut(trigger.target()) {
             let new_color = button.change_color(&color_pool).unwrap();
             grid_iter.grid.last_mut().unwrap()[button.index] = new_color as u8;

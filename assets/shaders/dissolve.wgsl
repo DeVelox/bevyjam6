@@ -17,15 +17,31 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
         0.0 + mesh.uv.y * 0.5
     );
 
-
-    let noise: f32 = voronoise(mesh.uv, 0.0, 1.0);
     let sprite = textureSample(sprite_texture, sprite_sampler, atlas_uv);
     let dissolve_value = params.y;
     let burn_size = params.z;
+    let game_time = params.w;
+    let noise_scale = 10.0;
+    let offset_hash = hash12(vec2<f32>(atlas_index, game_time));
+    let noise_uv = (mesh.uv + offset_hash) * noise_scale ;
+    let noise = voronoise(noise_uv, 1.0, 1.0);
 
    	let burn_size_step = burn_size * step(0.001, dissolve_value) * step(dissolve_value, 0.999);
 	let threshold = smoothstep(noise - burn_size_step, noise, dissolve_value);
 	let border = smoothstep(noise, noise + burn_size_step, dissolve_value);
 
     return vec4(mix(burn_color.rgb, sprite.rgb, border), sprite.a * threshold);
+}
+
+fn hash12(p: vec2<f32>) -> f32
+{
+    var p3  = fract(vec3<f32>(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+fn hash22(p: vec2<f32>) -> vec2<f32>
+{
+    var p3 = fract(vec3<f32>(p.xyx) * vec3<f32>(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx+33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
 }

@@ -19,7 +19,7 @@ pub struct CustomMaterial {
     #[texture(0)]
     #[sampler(1)]
     pub sprite_texture: Option<Handle<Image>>,
-    // atlas_index, dissolve_value, burn_size
+    // atlas_index, dissolve_value, burn_size, game_time
     #[uniform(2)]
     pub params: Vec4,
     #[uniform(3)]

@@ -42,7 +42,7 @@ pub(super) fn plugin(app: &mut App) {
         ),
     );
 }
-pub const ANIMATION_DURATION: f32 = 0.5;
+pub const ANIMATION_DURATION: f32 = 0.6;
 #[derive(Resource, Default, Debug)]
 pub struct PlayerRules {
     pub rules: HashMap<Tile, Rule>,
@@ -145,6 +145,7 @@ fn rendering_step(
     state: Res<State<IterationState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CustomMaterial>>,
+    time: Res<Time>,
 ) {
     let current = grid.grid.last().unwrap();
     let previous = grid.grid.get(grid.grid.len().saturating_sub(2)).unwrap();
@@ -178,8 +179,8 @@ fn rendering_step(
         ));
         let material = materials.add(CustomMaterial {
             sprite_texture: Some(level_assets.tilesheet.clone()),
-            params: Vec4::new(previous[i] as f32, 0.5, 0.04, 0.0),
-            burn_color: LinearRgba::from(Tile::from_u8(current[i]).color()),
+            params: Vec4::new(previous[i] as f32, 0.5, 0.04, time.elapsed_secs()),
+            burn_color: LinearRgba::from(Tile::from_u8(previous[i]).color()),
         });
         if current[i] != previous[i] && *state.get() == IterationState::Displaying {
             commands.spawn((
