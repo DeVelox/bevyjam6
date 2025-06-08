@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::theme::shader::CustomMaterial;
 
-use super::logic::IterationState;
+use super::logic::{ANIMATION_DURATION, IterationState};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, execute_animations);
@@ -43,7 +43,8 @@ fn execute_animations(
                 if material.params.y <= 0.0 {
                     state.set(IterationState::Ready);
                 } else {
-                    material.params.y -= 1.0 / config.fps as f32;
+                    material.params.y -= ANIMATION_DURATION / config.fps as f32;
+                    info!("Animation progress: {}", material.params.y);
                     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
                 }
             }

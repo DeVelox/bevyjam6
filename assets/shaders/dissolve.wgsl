@@ -1,5 +1,5 @@
 #import bevy_sprite::mesh2d_vertex_output::VertexOutput
-#import bevy_shader_utils::simplex_noise_2d::simplex_noise_2d
+#import bevy_shader_utils::voronoise::voronoise
 
 @group(2) @binding(0) var sprite_texture: texture_2d<f32>;
 @group(2) @binding(1) var sprite_sampler: sampler;
@@ -18,7 +18,7 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     );
 
 
-    let noise: f32 = simplex_noise_2d(vec2<f32>(mesh.uv));
+    let noise: f32 = voronoise(mesh.uv, 0.0, 1.0);
     let sprite = textureSample(sprite_texture, sprite_sampler, atlas_uv);
     let dissolve_value = params.y;
     let burn_size = params.z;

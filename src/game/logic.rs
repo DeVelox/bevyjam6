@@ -35,14 +35,14 @@ pub(super) fn plugin(app: &mut App) {
             ),
             simulation_system.run_if(
                 resource_exists::<AutomaticSimulation>
-                    .and(on_timer(Duration::from_secs_f32(0.5)))
+                    .and(on_timer(Duration::from_secs_f32(ANIMATION_DURATION)))
                     .and(in_state(Screen::Gameplay))
                     .and(in_state(Menu::None)),
             ),
         ),
     );
 }
-
+pub const ANIMATION_DURATION: f32 = 0.5;
 #[derive(Resource, Default, Debug)]
 pub struct PlayerRules {
     pub rules: HashMap<Tile, Rule>,
@@ -178,7 +178,7 @@ fn rendering_step(
         ));
         let material = materials.add(CustomMaterial {
             sprite_texture: Some(level_assets.tilesheet.clone()),
-            params: Vec4::new(previous[i] as f32, 1.0, 0.04, 0.0),
+            params: Vec4::new(previous[i] as f32, 0.5, 0.04, 0.0),
             burn_color: LinearRgba::from(Tile::from_u8(current[i]).color()),
         });
         if current[i] != previous[i] && *state.get() == IterationState::Displaying {
