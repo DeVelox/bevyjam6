@@ -9,8 +9,8 @@ use super::{
 use crate::{menus::Menu, screens::Screen, theme::shader::CustomMaterial};
 
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<PlayerRules>();
     app.init_state::<IterationState>();
+    app.init_resource::<PlayerRules>();
     app.init_resource::<GridIterations>();
     app.add_systems(OnEnter(IterationState::Reset), reset_step);
     app.add_systems(
@@ -27,18 +27,11 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Update,
-        (
-            calculate_color_pool.run_if(
-                resource_exists_and_changed::<GridIterations>
-                    .and(in_state(Screen::Gameplay))
-                    .and(in_state(Menu::None)),
-            ),
-            simulation_system.run_if(
-                resource_exists::<AutomaticSimulation>
-                    .and(on_timer(Duration::from_secs_f32(ANIMATION_DURATION)))
-                    .and(in_state(Screen::Gameplay))
-                    .and(in_state(Menu::None)),
-            ),
+        simulation_system.run_if(
+            resource_exists::<AutomaticSimulation>
+                .and(on_timer(Duration::from_secs_f32(ANIMATION_DURATION)))
+                .and(in_state(Screen::Gameplay))
+                .and(in_state(Menu::None)),
         ),
     );
 }
@@ -223,24 +216,6 @@ pub fn toggle_simulation(
     } else {
         commands.init_resource::<AutomaticSimulation>();
     }
-}
-
-fn calculate_color_pool(grid_iter: Res<GridIterations>, mut rules: ResMut<PlayerRules>) {
-    let mut color_pool: Grid = default();
-    color_pool.extend(grid_iter.grid.last().unwrap());
-    color_pool.extend(grid_iter.goal.clone());
-    color_pool.sort();
-    color_pool.dedup();
-    rules
-        .rules
-        .retain(|key, _| color_pool.contains(&(*key as u8)));
-    rules.color_pool.clear();
-    for tile in &color_pool {
-        let tile = Tile::from_u8(*tile);
-        rules.rules.entry(tile).or_default();
-        rules.color_pool.push(Some(tile));
-    }
-    rules.color_pool.push(None);
 }
 
 #[derive(Resource, Default)]

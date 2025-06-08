@@ -11,10 +11,10 @@ use crate::{
 };
 
 use super::{
-    level::{Level, LevelAssets, Switch},
+    level::{Grid, Level, LevelAssets, Switch},
     logic::{
-        AutomaticSimulation, DisableControls, Rule, Victory, reset_simulation, step_through,
-        toggle_simulation,
+        AutomaticSimulation, DisableControls, GridIterations, Rule, Victory, reset_simulation,
+        step_through, toggle_simulation,
     },
 };
 use super::{
@@ -54,7 +54,13 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         OnEnter(Screen::Gameplay),
-        (spawn_simulation_ui, spawn_rules_ui.after(spawn_level)).chain(),
+        (
+            spawn_level,
+            calculate_color_pool,
+            spawn_simulation_ui,
+            spawn_rules_ui,
+        )
+            .chain(),
     );
     app.add_systems(Update, update_ui_scale);
     app.add_observer(change_font);
@@ -314,7 +320,7 @@ pub struct MousePainting;
 
 fn toggle_mouse_painting(
     mut commands: Commands,
-    interaction_query: Query<(&Interaction, &mut MaskToggleButton)>,
+    interaction_query: Query<(&Interaction, &mut MaskToggleButton), Changed<Interaction>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     held_state: Option<Res<MousePainting>>,
     mut rules: ResMut<PlayerRules>,
@@ -399,6 +405,23 @@ fn handle_color_pickers(
     }
 }
 
+pub fn calculate_color_pool(grid_iter: Res<GridIterations>, mut rules: ResMut<PlayerRules>) {
+    let mut color_pool: Grid = default();
+    color_pool.extend(grid_iter.grid.last().unwrap());
+    color_pool.extend(grid_iter.goal.clone());
+    color_pool.sort();
+    color_pool.dedup();
+    rules
+        .rules
+        .retain(|key, _| color_pool.contains(&(*key as u8)));
+    rules.color_pool.clear();
+    for tile in &color_pool {
+        let tile = Tile::from_u8(*tile);
+        rules.rules.entry(tile).or_default();
+        rules.color_pool.push(Some(tile));
+    }
+    rules.color_pool.push(None);
+}
 // fn setup_egui(
 //     mut contexts: EguiContexts,
 //     level_assets: Res<LevelAssets>,

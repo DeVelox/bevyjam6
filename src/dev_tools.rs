@@ -7,10 +7,11 @@ use bevy::{
 
 use crate::{
     game::{
-        interface::{RightSidebar, spawn_simulation_ui},
+        interface::{RightSidebar, calculate_color_pool, spawn_simulation_ui},
         level::{Puzzle, Tile},
         logic::{GridIterations, PlayerRules},
     },
+    menus::Menu,
     screens::Screen,
     theme::{
         palette::*,
@@ -38,6 +39,14 @@ pub(super) fn plugin(app: &mut App) {
         spawn_editor_ui.after(spawn_simulation_ui),
     );
     app.init_resource::<CurrentPaintColor>();
+    app.add_systems(
+        PreUpdate,
+        calculate_color_pool.run_if(
+            resource_changed::<PlayerRules>
+                .and(in_state(Screen::Gameplay))
+                .and(in_state(Menu::None)),
+        ),
+    );
 }
 
 const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
