@@ -1,8 +1,5 @@
 use Val::Px;
-use bevy::{
-    ecs::spawn::{SpawnIter, SpawnWith},
-    prelude::*,
-};
+use bevy::{ecs::spawn::SpawnIter, prelude::*};
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
 use crate::{
     menus::Menu,
@@ -90,7 +87,7 @@ fn spawn_rules_ui(
         .insert(Children::spawn(SpawnIter(rule_widgets.into_iter())));
 }
 
-fn spawn_simulation_ui(mut commands: Commands) {
+pub fn spawn_simulation_ui(mut commands: Commands) {
     commands.spawn((
         widget::ui_row("Gameplay UI"),
         GlobalZIndex(1),
@@ -118,81 +115,68 @@ fn spawn_simulation_ui(mut commands: Commands) {
                             row_gap: Px(16.0),
                             ..default()
                         },
-                        children![
-                            #[cfg(feature = "dev")]
-                            (
-                                Node {
-                                    display: Display::Flex,
-                                    flex_direction: FlexDirection::Row,
-                                    column_gap: Px(8.0),
-                                    ..default()
-                                },
-                                Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
-                                    for tile in Tile::all().into_iter().take(8) {
-                                        parent.spawn(crate::dev_tools::editor_color_picker(
-                                            Some(tile),
-                                            crate::dev_tools::EditorColorPickerButton {
-                                                color: Some(tile),
-                                            },
-                                        ));
-                                    }
-                                }))
-                            ),
-                            #[cfg(feature = "dev")]
-                            widget::button_custom(
-                                "󰉉",
-                                crate::dev_tools::print_level,
-                                None,
-                                Some(ButtonSize {
-                                    width: 382.0,
-                                    height: BUTTON_SIZE_ALT.height
-                                })
-                            ),
-                            (
-                                Node {
-                                    display: Display::Flex,
-                                    flex_direction: FlexDirection::Row,
-                                    column_gap: Px(8.0),
-                                    ..default()
-                                },
-                                children![
+                        children![(
+                            Node {
+                                display: Display::Flex,
+                                flex_direction: FlexDirection::Row,
+                                column_gap: Px(8.0),
+                                ..default()
+                            },
+                            children![
+                                widget::button_custom(
+                                    "",
+                                    toggle_simulation,
+                                    Some(BUTTON_COLORS_ALT),
+                                    Some(ButtonSize {
+                                        width: 120.0,
+                                        height: BUTTON_SIZE_ALT.height
+                                    })
+                                ),
+                                (
                                     widget::button_custom(
-                                        "",
-                                        toggle_simulation,
-                                        Some(BUTTON_COLORS_ALT),
-                                        Some(ButtonSize {
-                                            width: 120.0,
-                                            height: BUTTON_SIZE_ALT.height
-                                        })
-                                    ),
-                                    (
-                                        widget::button_custom(
-                                            "󰑙",
-                                            reset_simulation,
-                                            None,
-                                            Some(BUTTON_SIZE_ALT)
-                                        ),
-                                        LockReset
-                                    ),
-                                    widget::button_custom(
-                                        "",
-                                        step_through,
+                                        "󰑙",
+                                        reset_simulation,
                                         None,
                                         Some(BUTTON_SIZE_ALT)
                                     ),
-                                    (widget::button_custom(
-                                        "",
-                                        go_next_level,
-                                        None,
-                                        Some(BUTTON_SIZE_ALT)
-                                    ),),
-                                ],
-                            ),
-                        ],
+                                    LockReset
+                                ),
+                                widget::button_custom(
+                                    "",
+                                    step_through,
+                                    None,
+                                    Some(BUTTON_SIZE_ALT)
+                                ),
+                                (widget::button_custom(
+                                    "",
+                                    go_next_level,
+                                    None,
+                                    Some(BUTTON_SIZE_ALT)
+                                ),),
+                            ],
+                        ),],
                     ),
                 ],
             ),
-            widget::ui_split("Right Sidebar", AlignItems::Center, JustifyContent::Center,),
+            (
+                widget::ui_split(
+                    "Right Sidebar",
+                    AlignItems::FlexStart,
+                    JustifyContent::Center,
+                ),
+                children![(
+                    Node {
+                        width: Val::Px(420.0),
+                        height: Val::Percent(100.0),
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::FlexStart,
+                        justify_content: JustifyContent::FlexEnd,
+                        row_gap: Px(15.0),
+                        ..default()
+                    },
+                    RightSidebar
+                )],
+            )
         ],
     ));
 }
@@ -282,6 +266,8 @@ fn change_font(
 
 #[derive(Component)]
 pub struct RulesWidget;
+#[derive(Component)]
+pub struct RightSidebar;
 #[derive(Component)]
 pub struct LockReset;
 

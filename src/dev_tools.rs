@@ -7,11 +7,16 @@ use bevy::{
 
 use crate::{
     game::{
+        interface::{RightSidebar, spawn_simulation_ui},
         level::{Level, Puzzle, Tile},
         logic::{GridIterations, IterationState, PlayerRules},
     },
     screens::Screen,
-    theme::{palette::*, prelude::InteractionPalette},
+    theme::{
+        palette::*,
+        prelude::InteractionPalette,
+        widget::{self, BUTTON_SIZE_ALT, ButtonSize},
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -27,6 +32,10 @@ pub(super) fn plugin(app: &mut App) {
             (reset_debug_picker, handle_debug_picker),
             toggle_debug_ui.run_if(input_just_pressed(TOGGLE_KEY)),
         ),
+    );
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        spawn_editor_ui.after(spawn_simulation_ui),
     );
     app.init_resource::<CurrentPaintColor>();
 }
@@ -180,4 +189,38 @@ pub fn editor_color_picker(tile: Option<Tile>, action: EditorColorPickerButton) 
                 ));
         })),
     )
+}
+pub fn editor_color_picker_row() -> impl Bundle {
+    (
+        Node {
+            display: Display::Flex,
+            flex_direction: FlexDirection::Row,
+            column_gap: Val::Px(8.0),
+            ..default()
+        },
+        Children::spawn(bevy::ecs::spawn::SpawnWith(
+            move |parent: &mut ChildSpawner| {
+                for tile in Tile::all().into_iter().take(8) {
+                    parent.spawn(crate::dev_tools::editor_color_picker(
+                        Some(tile),
+                        crate::dev_tools::EditorColorPickerButton { color: Some(tile) },
+                    ));
+                }
+            },
+        )),
+    )
+}
+pub fn spawn_editor_ui(mut commands: Commands, buttons: Single<Entity, With<RightSidebar>>) {
+    commands.entity(*buttons).insert(children![
+        editor_color_picker_row(),
+        widget::button_custom(
+            "󰉉",
+            crate::dev_tools::print_level,
+            None,
+            Some(ButtonSize {
+                width: 382.0,
+                height: BUTTON_SIZE_ALT.height
+            })
+        ),
+    ]);
 }
