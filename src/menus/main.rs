@@ -32,7 +32,10 @@ fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ImageNode::new(asset_server.load("images/title.png")),
             ),
-            Node {height: Val::Percent(48.0), ..default()},
+            Node {
+                height: Val::Percent(48.0),
+                ..default()
+            },
             widget::button_custom(
                 "Play",
                 enter_loading_or_gameplay_screen,
@@ -45,6 +48,22 @@ fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         ],
         #[cfg(target_family = "wasm")]
         children![
+            (
+                Name::new("Title image"),
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    top: Val::Px(0.0),
+                    left: Val::Px(0.0),
+                    ..default()
+                },
+                ImageNode::new(asset_server.load("images/title.png")),
+            ),
+            Node {
+                height: Val::Percent(48.0),
+                ..default()
+            },
             widget::button_custom(
                 "Play",
                 enter_loading_or_gameplay_screen,

@@ -23,20 +23,21 @@ fn spawn_credits_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         widget::ui_root("Credits Menu"),
         GlobalZIndex(2),
         StateScoped(Menu::Credits),
-        children![        (
-            Name::new("Title image"),
-            Node {
-                position_type: PositionType::Absolute,
-                width: Val::Px(512.0),
-                height: Val::Px(512.0),
-                bottom: Val::Px(-160.0),
-                right: Val::Px(-80.0),
-                ..default()
-            },
-            ImageNode::new(asset_server.load("images/orange.png")),
-            Transform::from_rotation(Quat::from_rotation_z(25.0_f32.to_radians())),
-            BorderRadius::all(Val::Px(10.0))
-        ),
+        children![
+            (
+                Name::new("Title image"),
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Px(512.0),
+                    height: Val::Px(512.0),
+                    bottom: Val::Px(-160.0),
+                    right: Val::Px(-80.0),
+                    ..default()
+                },
+                ImageNode::new(asset_server.load("images/orange.png")),
+                Transform::from_rotation(Quat::from_rotation_z(25.0_f32.to_radians())),
+                BorderRadius::all(Val::Px(10.0))
+            ),
             widget::header("Creators"),
             created_by(),
             widget::header(" "), // just a gap
