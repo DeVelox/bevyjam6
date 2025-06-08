@@ -40,10 +40,10 @@ fn execute_animations(
         config.frame_timer.tick(time.delta());
         if let Some(material) = materials.get_mut(config.material.id()) {
             if config.frame_timer.just_finished() {
-                if material.dissolve_value <= 0.0 {
+                if material.params.y <= 0.0 {
                     state.set(IterationState::Ready);
                 } else {
-                    material.dissolve_value -= 1.0 / config.fps as f32;
+                    material.params.y -= 1.0 / config.fps as f32;
                     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
                 }
             }
