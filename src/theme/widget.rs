@@ -459,7 +459,7 @@ pub fn rule_ui(tile: Tile, rule: Rule) -> impl Bundle {
                 BackgroundColor(tile.color()),
                 BorderRadius::all(Val::Px(10.0)),
                 children![
-                    color_picker(Some(tile), ()),
+                    color_picker(Some(tile), (Visibility::default(), Transform::default())),
                     (
                         Node {
                             display: Display::Grid,
