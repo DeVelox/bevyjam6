@@ -43,7 +43,7 @@ fn execute_animations(
                 if material.params.y <= 0.0 {
                     state.set(IterationState::Ready);
                 } else {
-                    material.params.y -= ANIMATION_DURATION / config.fps as f32;
+                    material.params.y -= (1.0 / config.fps as f32) / ANIMATION_DURATION;
                     config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
                 }
             }

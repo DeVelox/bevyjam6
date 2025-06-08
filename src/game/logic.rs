@@ -179,7 +179,7 @@ fn rendering_step(
         ));
         let material = materials.add(CustomMaterial {
             sprite_texture: Some(level_assets.tilesheet.clone()),
-            params: Vec4::new(previous[i] as f32, 0.5, 0.04, time.elapsed_secs()),
+            params: Vec4::new(previous[i] as f32, 1.0, 0.04, time.elapsed_secs()),
             burn_color: LinearRgba::from(Tile::from_u8(previous[i]).color()),
         });
         if current[i] != previous[i] && *state.get() == IterationState::Displaying {
