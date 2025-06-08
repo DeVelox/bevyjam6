@@ -1,27 +1,28 @@
-use Val::Px;
-use bevy::{ecs::spawn::SpawnIter, prelude::*};
+use super::{
+    level::{spawn_level, Tile},
+    logic::PlayerRules,
+};
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
+use super::{
+    level::{Grid, Level, LevelAssets, Switch},
+    logic::{
+        reset_simulation, step_through, toggle_simulation, AutomaticSimulation, DisableControls, GridIterations,
+        Rule, Victory,
+    },
+};
+use crate::menus::tutorial::spawn_tutorial_menu;
 use crate::{
     menus::Menu,
     screens::Screen,
     theme::{
         palette::{BUTTON_PRESSED_BACKGROUND, BUTTON_PRESSED_BACKGROUND_ALT},
         prelude::InteractionPalette,
-        widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonColors, ButtonSize},
+        widget::{self, ButtonColors, ButtonSize, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT},
     },
 };
-
-use super::{
-    level::{Grid, Level, LevelAssets, Switch},
-    logic::{
-        AutomaticSimulation, DisableControls, GridIterations, Rule, Victory, reset_simulation,
-        step_through, toggle_simulation,
-    },
-};
-use super::{
-    level::{Tile, spawn_level},
-    logic::PlayerRules,
-};
+use bevy::{ecs::spawn::SpawnIter, prelude::*};
+use std::cmp::PartialOrd;
+use Val::Px;
 
 pub(super) fn plugin(app: &mut App) {
     // app.add_plugins(EguiPlugin::default());
@@ -65,6 +66,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(Update, update_ui_scale);
     app.add_observer(change_font);
+    app.init_resource::<ReachedLevel>();
 }
 
 fn spawn_rules_ui(
@@ -93,7 +95,7 @@ fn spawn_rules_ui(
         .insert(Children::spawn(SpawnIter(rule_widgets.into_iter())));
 }
 
-pub fn spawn_simulation_ui(mut commands: Commands) {
+pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
     commands.spawn((
         widget::ui_row("Gameplay UI"),
         GlobalZIndex(1),
@@ -175,24 +177,92 @@ pub fn spawn_simulation_ui(mut commands: Commands) {
                         width: Val::Px(420.0),
                         height: Val::Percent(100.0),
                         flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::FlexStart,
+                        align_items: AlignItems::Center,
                         justify_content: JustifyContent::FlexEnd,
                         row_gap: Px(15.0),
                         ..default()
                     },
+                    children![(
+                        Node {
+                            display: Display::Flex,
+                            flex_direction: FlexDirection::Row,
+                            column_gap: Px(8.0),
+                            ..default()
+                        },
+                        children![
+                            (
+                                Help::General,
+                                widget::button_custom(
+                                    "",
+                                    spawn_tutorial_menu,
+                                    None,
+                                    Some(BUTTON_SIZE_ALT)
+                                ),
+                            ),
+                            (
+                                Help::Winning,
+                                widget::button_custom(
+                                    "",
+                                    spawn_tutorial_menu,
+                                    None,
+                                    Some(BUTTON_SIZE_ALT)
+                                ),
+                            ),
+                            (
+                                Help::Search,
+                                widget::button_custom(
+                                    "󱈅",
+                                    spawn_tutorial_menu,
+                                    None,
+                                    Some(BUTTON_SIZE_ALT)
+                                ),
+                                if reached.0 >= Level::Beginner2 {
+                                    Visibility::default()
+                                } else {
+                                    Visibility::Hidden
+                                }
+                            ),
+                            (
+                                Help::Negate,
+                                widget::button_custom(
+                                    "",
+                                    spawn_tutorial_menu,
+                                    None,
+                                    Some(BUTTON_SIZE_ALT)
+                                ),
+                                if reached.0 >= Level::Beginner3 {
+                                    Visibility::default()
+                                } else {
+                                    Visibility::Hidden
+                                }
+                            ),
+                        ],
+                    ),],
                     RightSidebar
                 )],
             )
         ],
     ));
 }
+#[derive(Resource, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
+pub struct ReachedLevel(Level);
+#[derive(Component)]
+pub enum Help {
+    General,
+    Winning,
+    Search,
+    Negate,
+}
 pub fn go_next_level(
     _: Trigger<Pointer<Click>>,
     current_level: Res<State<Level>>,
     mut level: ResMut<NextState<Level>>,
     mut screen: ResMut<NextState<Screen>>,
+    mut reached: ResMut<ReachedLevel>,
 ) {
-    level.set(current_level.get().next());
+    let next_level = current_level.get().next();
+    level.set(next_level);
+    reached.0 = next_level.max(reached.0);
     screen.set(Screen::Loading);
 }
 

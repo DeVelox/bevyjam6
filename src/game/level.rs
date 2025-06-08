@@ -203,7 +203,7 @@ impl Utility for Grid {
     }
 }
 
-#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[derive(States, Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Debug, Default)]
 #[states(scoped_entities)]
 pub enum Level {
     #[default]
