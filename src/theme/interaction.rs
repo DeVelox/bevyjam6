@@ -54,7 +54,7 @@ impl FromWorld for InteractionAssets {
         let assets = world.resource::<AssetServer>();
         Self {
             hover: assets.load("audio/sound_effects/button_hover.ogg"),
-            click: assets.load("audio/sound_effects/slime.ogg"),
+            click: assets.load("audio/sound_effects/blob.ogg"),
             // click: assets.load("audio/sound_effects/button_click.ogg"),
         }
     }

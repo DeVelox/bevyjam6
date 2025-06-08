@@ -5,6 +5,7 @@ use crate::{
     menus::Menu,
     screens::Screen,
     theme::{
+        palette::{BUTTON_PRESSED_BACKGROUND, BUTTON_PRESSED_BACKGROUND_ALT},
         prelude::InteractionPalette,
         widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonColors, ButtonSize},
     },
@@ -218,7 +219,10 @@ pub fn update_button_text(
         } else if locked.is_none() && text.0 == icons[1] {
             text.0 = icons[0].to_string();
         }
-        if victory.is_some() && text.0 == "" {
+        if (victory.is_some() && text.0 == "")
+            || (locked.is_some() && text.0 == "󰝳")
+            || (auto.is_none() && text.0 == "")
+        {
             commands
                 .entity(entity)
                 .insert(TextColor(BUTTON_COLORS_ALT.text));
@@ -229,8 +233,18 @@ pub fn update_button_text(
                     hovered: BUTTON_COLORS_ALT.hovered,
                     pressed: BUTTON_COLORS_ALT.pressed,
                 },
+                BoxShadow::new(
+                    BUTTON_PRESSED_BACKGROUND_ALT,
+                    Val::Px(0.0),
+                    Val::Px(8.0),
+                    Val::Percent(0.0),
+                    Val::Px(0.0),
+                ),
             ));
-        } else if victory.is_none() && text.0 == "" {
+        } else if (victory.is_none() && text.0 == "")
+            || (locked.is_none() && text.0 == "󰑙")
+            || (auto.is_some() && text.0 == "")
+        {
             let colors = ButtonColors::default();
             commands.entity(entity).insert(TextColor(colors.text));
             commands.entity(parent.0).insert((
@@ -240,6 +254,13 @@ pub fn update_button_text(
                     hovered: colors.hovered,
                     pressed: colors.pressed,
                 },
+                BoxShadow::new(
+                    BUTTON_PRESSED_BACKGROUND,
+                    Val::Px(0.0),
+                    Val::Px(8.0),
+                    Val::Percent(0.0),
+                    Val::Px(0.0),
+                ),
             ));
         }
     }
