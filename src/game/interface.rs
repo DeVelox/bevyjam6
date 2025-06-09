@@ -200,7 +200,7 @@ pub fn spawn_simulation_ui(
                                 widget::button_custom(
                                     "",
                                     spawn_tutorial_menu,
-                                    help_new(&*help_seen, Help::General as usize),
+                                    help_new(&help_seen, Help::General as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                             ),
@@ -209,7 +209,7 @@ pub fn spawn_simulation_ui(
                                 widget::button_custom(
                                     "",
                                     spawn_tutorial_menu,
-                                    help_new(&*help_seen, Help::Winning as usize),
+                                    help_new(&help_seen, Help::Winning as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                             ),
@@ -218,7 +218,7 @@ pub fn spawn_simulation_ui(
                                 widget::button_custom(
                                     "󱈅",
                                     spawn_tutorial_menu,
-                                    help_new(&*help_seen, Help::Search as usize),
+                                    help_new(&help_seen, Help::Search as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                                 if reached.0 >= Level::Beginner2 {
@@ -232,7 +232,7 @@ pub fn spawn_simulation_ui(
                                 widget::button_custom(
                                     "",
                                     spawn_tutorial_menu,
-                                    help_new(&*help_seen, Help::Negate as usize),
+                                    help_new(&help_seen, Help::Negate as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                                 if reached.0 >= Level::Beginner3 {
