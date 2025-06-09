@@ -1,8 +1,10 @@
 //! The tutorial menu.
 
-use crate::game::interface::Help;
-use crate::theme::widget::ButtonSize;
-use crate::{menus::Menu, theme::widget, Pause};
+use crate::game::interface::{Help, HelpSeen};
+use crate::theme::interaction::InteractionPalette;
+use crate::theme::palette::BUTTON_PRESSED_BACKGROUND;
+use crate::theme::widget::{ButtonColors, ButtonSize};
+use crate::{Pause, menus::Menu, theme::widget};
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
@@ -18,11 +20,34 @@ pub fn spawn_tutorial_menu(
     asset_server: Res<AssetServer>,
     mut state: ResMut<NextState<Menu>>,
     mut next_pause: ResMut<NextState<Pause>>,
-    parent: Query<&ChildOf, With<Button>>,
+    mut help_seen: ResMut<HelpSeen>,
+    parent: Query<(&ChildOf, &Children, Entity), With<Button>>,
     help: Query<&Help>,
 ) {
-    if let Ok(parent) = parent.get(trigger.target()) {
-        if let Ok(help_type) = help.get(parent.0) {
+    if let Ok((parent, text, button)) = parent.get(trigger.target()) {
+        if let Ok(&help_type) = help.get(parent.0) {
+            if !help_seen.0[help_type as usize] {
+                let colors = ButtonColors::default();
+                commands
+                    .entity(*text.into_iter().next().unwrap())
+                    .insert(TextColor(colors.text));
+                commands.entity(button).insert((
+                    BackgroundColor(colors.background),
+                    InteractionPalette {
+                        none: colors.background,
+                        hovered: colors.hovered,
+                        pressed: colors.pressed,
+                    },
+                    BoxShadow::new(
+                        BUTTON_PRESSED_BACKGROUND,
+                        Val::Px(0.0),
+                        Val::Px(8.0),
+                        Val::Percent(0.0),
+                        Val::Px(0.0),
+                    ),
+                ));
+                help_seen.0[help_type as usize] = true;
+            }
             commands.spawn((
                 Name::new("Pause Overlay"),
                 Node {

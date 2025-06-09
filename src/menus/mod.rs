@@ -4,8 +4,8 @@ mod credits;
 mod main;
 mod pause;
 mod settings;
-mod victory;
 pub mod tutorial;
+mod victory;
 
 use bevy::prelude::*;
 

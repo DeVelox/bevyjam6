@@ -1,13 +1,13 @@
 use super::{
-    level::{spawn_level, Tile},
+    level::{Tile, spawn_level},
     logic::PlayerRules,
 };
 // use bevy_egui::{EguiContextPass, EguiContextSettings, EguiContexts, EguiPlugin, egui};
 use super::{
     level::{Grid, Level, LevelAssets, Switch},
     logic::{
-        reset_simulation, step_through, toggle_simulation, AutomaticSimulation, DisableControls, GridIterations,
-        Rule, Victory,
+        AutomaticSimulation, DisableControls, GridIterations, Rule, Victory, reset_simulation,
+        step_through, toggle_simulation,
     },
 };
 use crate::menus::tutorial::spawn_tutorial_menu;
@@ -17,12 +17,12 @@ use crate::{
     theme::{
         palette::{BUTTON_PRESSED_BACKGROUND, BUTTON_PRESSED_BACKGROUND_ALT},
         prelude::InteractionPalette,
-        widget::{self, ButtonColors, ButtonSize, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT},
+        widget::{self, BUTTON_COLORS_ALT, BUTTON_SIZE_ALT, ButtonColors, ButtonSize},
     },
 };
+use Val::Px;
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
 use std::cmp::PartialOrd;
-use Val::Px;
 
 pub(super) fn plugin(app: &mut App) {
     // app.add_plugins(EguiPlugin::default());
@@ -66,6 +66,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(Update, update_ui_scale);
     app.add_observer(change_font);
+    app.init_resource::<HelpSeen>();
     app.init_resource::<ReachedLevel>();
 }
 
@@ -95,7 +96,11 @@ fn spawn_rules_ui(
         .insert(Children::spawn(SpawnIter(rule_widgets.into_iter())));
 }
 
-pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
+pub fn spawn_simulation_ui(
+    mut commands: Commands,
+    reached: Res<ReachedLevel>,
+    help_seen: Res<HelpSeen>,
+) {
     commands.spawn((
         widget::ui_row("Gameplay UI"),
         GlobalZIndex(1),
@@ -195,7 +200,7 @@ pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
                                 widget::button_custom(
                                     "",
                                     spawn_tutorial_menu,
-                                    None,
+                                    help_new(&*help_seen, Help::General as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                             ),
@@ -204,7 +209,7 @@ pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
                                 widget::button_custom(
                                     "",
                                     spawn_tutorial_menu,
-                                    None,
+                                    help_new(&*help_seen, Help::Winning as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                             ),
@@ -213,7 +218,7 @@ pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
                                 widget::button_custom(
                                     "󱈅",
                                     spawn_tutorial_menu,
-                                    None,
+                                    help_new(&*help_seen, Help::Search as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                                 if reached.0 >= Level::Beginner2 {
@@ -227,7 +232,7 @@ pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
                                 widget::button_custom(
                                     "",
                                     spawn_tutorial_menu,
-                                    None,
+                                    help_new(&*help_seen, Help::Negate as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
                                 if reached.0 >= Level::Beginner3 {
@@ -246,7 +251,16 @@ pub fn spawn_simulation_ui(mut commands: Commands, reached: Res<ReachedLevel>) {
 }
 #[derive(Resource, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct ReachedLevel(Level);
-#[derive(Component)]
+#[derive(Resource, Default)]
+pub struct HelpSeen(pub [bool; 4]);
+fn help_new(help_seen: &HelpSeen, index: usize) -> Option<ButtonColors> {
+    if help_seen.0[index] {
+        Some(ButtonColors::default())
+    } else {
+        Some(BUTTON_COLORS_ALT)
+    }
+}
+#[derive(Component, Copy, Clone)]
 pub enum Help {
     General,
     Winning,
