@@ -221,7 +221,7 @@ pub fn spawn_simulation_ui(
                                     help_new(&help_seen, Help::Search as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
-                                if reached.0 >= Level::Beginner2 {
+                                if reached.0 >= Level::Intermediate1 {
                                     Visibility::default()
                                 } else {
                                     Visibility::Hidden
@@ -235,7 +235,7 @@ pub fn spawn_simulation_ui(
                                     help_new(&help_seen, Help::Negate as usize),
                                     Some(BUTTON_SIZE_ALT)
                                 ),
-                                if reached.0 >= Level::Beginner3 {
+                                if reached.0 >= Level::Intermediate5 {
                                     Visibility::default()
                                 } else {
                                     Visibility::Hidden
