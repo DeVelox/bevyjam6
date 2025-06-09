@@ -29,6 +29,14 @@ pub struct LevelAssets {
     pub solutions: Handle<Levels>,
     #[dependency]
     pub tilesheet: Handle<Image>,
+    #[dependency]
+    pub help_general: Handle<Image>,
+    #[dependency]
+    pub help_winning: Handle<Image>,
+    #[dependency]
+    pub help_search: Handle<Image>,
+    #[dependency]
+    pub help_negate: Handle<Image>,
     pub atlas: Handle<TextureAtlasLayout>,
     pub tile_size: f32,
 }
@@ -51,6 +59,10 @@ impl FromWorld for LevelAssets {
             puzzles: assets.load("levels/puzzles.ron"),
             solutions: assets.load("levels/solutions.ron"),
             tilesheet: assets.load("images/tilesheet.png"),
+            help_general: assets.load("images/tutorial1.png"),
+            help_winning: assets.load("images/tutorial1a.png"),
+            help_search: assets.load("images/tutorial2.png"),
+            help_negate: assets.load("images/tutorial3.png"),
             tile_size: 128.,
         }
     }

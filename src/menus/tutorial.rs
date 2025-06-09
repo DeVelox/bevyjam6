@@ -1,6 +1,7 @@
 //! The tutorial menu.
 
 use crate::game::interface::{Help, HelpSeen};
+use crate::game::level::LevelAssets;
 use crate::theme::interaction::InteractionPalette;
 use crate::theme::palette::BUTTON_PRESSED_BACKGROUND;
 use crate::theme::widget::{ButtonColors, ButtonSize};
@@ -17,7 +18,7 @@ pub(super) fn plugin(app: &mut App) {
 pub fn spawn_tutorial_menu(
     trigger: Trigger<Pointer<Click>>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    level_assets: Res<LevelAssets>,
     mut state: ResMut<NextState<Menu>>,
     mut next_pause: ResMut<NextState<Pause>>,
     mut help_seen: ResMut<HelpSeen>,
@@ -62,10 +63,10 @@ pub fn spawn_tutorial_menu(
             next_pause.set(Pause(true));
             state.set(Menu::Tutorial);
             let image = match help_type {
-                Help::General => "images/tutorial1.png",
-                Help::Winning => "images/tutorial1a.png",
-                Help::Search => "images/tutorial2.png",
-                Help::Negate => "images/tutorial3.png",
+                Help::General => level_assets.help_general.clone(),
+                Help::Winning => level_assets.help_winning.clone(),
+                Help::Search => level_assets.help_search.clone(),
+                Help::Negate => level_assets.help_negate.clone(),
             };
             commands.spawn((
                 widget::ui_root("Tutorial Menu"),
@@ -82,7 +83,7 @@ pub fn spawn_tutorial_menu(
                             left: Val::Px(0.0),
                             ..default()
                         },
-                        ImageNode::new(asset_server.load(image)),
+                        ImageNode::new(image),
                     ),
                     (
                         Node {
