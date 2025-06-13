@@ -1,0 +1,26 @@
+[
+    {
+        "label": "bevy run",
+        "command": "bevy run"
+    },
+    {
+        "label": "bevy release",
+        "command": "bevy run --release"
+    },
+    {
+        "label": "bevy web",
+        "command": "bevy run web"
+    },
+    {
+        "label": "bevy web release",
+        "command": "bevy run --release web"
+    },
+    {
+        "label": "bevy lint",
+        "command": "bevy lint --locked --workspace --all-targets --profile ci --all-features"
+    },
+    {
+        "label": "clippy lint",
+        "command": "cargo clippy --locked --workspace --all-targets --profile ci --all-features"
+    }
+]
